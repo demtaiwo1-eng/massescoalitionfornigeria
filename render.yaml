@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: masses-coalition-news
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22.23.5
+      - key: SITE_URL
+        value: https://massescoalitionfornigeria.com
