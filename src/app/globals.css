@@ -23,3 +23,34 @@
 
 
 .site-search{max-width:680px}.search-form button{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}.search-results{display:grid;gap:9px;margin:18px 0}.search-result{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:16px 18px;background:#fff;border:1px solid var(--line);color:var(--ink)}.search-result>span{display:grid;gap:4px}.search-result small{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--green);font-weight:700}.search-result strong{font-family:'Playfair Display',serif;font-size:19px}.search-result span span,.search-hint{font-size:12px;line-height:1.7;color:var(--muted)}.search-result>b{font-size:18px;color:var(--green)}.search-result:hover{border-color:#9bbca4}.search-hint{margin:10px 0}
+
+
+/* MCN secure newsroom workspace */
+.signin-form{display:grid;gap:15px;margin-top:22px}
+.signin-form label,.article-create-form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#20352b}
+.signin-form input,.article-create-form input,.article-create-form select,.article-create-form textarea{width:100%;border:1px solid #d5dfd5;background:#fff;color:#172321;padding:13px 14px;font:inherit;font-size:14px;border-radius:2px}
+.signin-form input:focus,.article-create-form input:focus,.article-create-form select:focus,.article-create-form textarea:focus{outline:2px solid #78a987;outline-offset:1px}
+.signin-form label small{font-size:11px;color:#64736a;font-weight:400}
+.signin-mode-toggle{margin:18px 0 8px;border:0;background:transparent;color:#1d6540;text-decoration:underline;cursor:pointer;font:inherit;font-size:13px}
+.signin-card .notice{padding:12px 14px;background:#f1f5ef;border-left:3px solid #2c774b;color:#33443a}
+.signin-card .text-link{display:inline-block;margin-top:12px;color:#246b43;font-size:13px;font-weight:700}
+.newsroom-dashboard{min-height:100vh;background:#f4f6f2;color:#172321}
+.newsroom-topbar{min-height:76px;padding:14px clamp(18px,5vw,70px);background:#fff;border-bottom:1px solid #dce4db;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.newsroom-topbar>div{display:flex;align-items:center;gap:18px;font-size:12px;text-transform:capitalize}
+.newsroom-topbar button,.article-actions button{border:1px solid #cbd8cc;background:#fff;color:#1d5434;padding:9px 13px;cursor:pointer;font:inherit;font-size:12px;font-weight:700}
+.newsroom-content{width:min(1180px,calc(100% - 36px));margin:48px auto}
+.newsroom-heading{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:28px}
+.newsroom-heading h1{font:600 clamp(30px,4vw,44px) 'Playfair Display',serif;margin:8px 0}
+.newsroom-heading p{color:#637067;font-size:14px}
+.newsroom-heading .primary-button,.article-create-form .primary-button{border:0;background:#17623b;color:#fff;padding:13px 18px;font-weight:700;cursor:pointer}
+.article-create-form,.newsroom-table-wrap{background:#fff;border:1px solid #e0e7df;padding:24px;margin:22px 0}
+.article-create-form{display:grid;gap:16px;max-width:760px}
+.article-create-form h2,.newsroom-table-wrap h2{font:600 24px 'Playfair Display',serif;margin:0 0 8px}
+.newsroom-table-wrap{overflow-x:auto}
+.newsroom-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+.newsroom-table th,.newsroom-table td{padding:14px 12px;border-bottom:1px solid #e6ece5;vertical-align:middle}
+.newsroom-table th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#627066}
+.status-pill{display:inline-block;padding:5px 8px;background:#edf4ee;color:#245e3b;font-size:10px;text-transform:capitalize;border-radius:30px}
+.article-actions{display:flex;flex-wrap:wrap;gap:6px}
+.newsroom-dashboard .notice{padding:12px;background:#fff3ed;color:#8c3d22;border-left:3px solid #bd643f}
+@media(max-width:680px){.signin-card{padding:26px 22px}.newsroom-topbar{align-items:flex-start;flex-direction:column}.newsroom-topbar>div{width:100%;justify-content:space-between}.newsroom-content{margin:28px auto}.newsroom-heading{align-items:flex-start;flex-direction:column}.newsroom-table{min-width:680px}}
