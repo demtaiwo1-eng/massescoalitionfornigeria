@@ -6,20 +6,20 @@ import { useEffect, useState } from "react";
 const API="https://mcn-newsroom-api.onrender.com";
 type Article={id:string;slug:string;title:string;dek:string|null;category:string;featured_image_url:string|null;featured_image_alt:string|null;published_at:string;seo_description:string|null};
 
-export default function PublicArticles({category}: {category?:string}) {
+export default function PublicArticles({category,limit=30}: {category?:string;limit?:number}) {
   const [articles,setArticles]=useState<Article[]>([]);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
   useEffect(()=>{
     const controller=new AbortController();
     const url=new URL(API+"/api/articles");
-    url.searchParams.set("limit","30");
+    url.searchParams.set("limit",String(limit));
     if(category)url.searchParams.set("category",category);
     fetch(url,{signal:controller.signal}).then(async r=>{if(!r.ok)throw new Error("Could not load published stories.");return r.json();})
       .then(data=>setArticles(data.articles||[])).catch(e=>{if(e.name!=="AbortError")setError(e.message||"Stories are temporarily unavailable.");})
       .finally(()=>setLoading(false));
     return ()=>controller.abort();
-  },[category]);
+  },[category,limit]);
   if(loading)return <p className="search-hint">Loading published stories…</p>;
   if(error)return <p className="notice" role="status">{error}</p>;
   if(!articles.length)return <div className="empty-stories"><strong>No stories published yet.</strong><p>Our newsroom is preparing original, verified reporting for this section. Check back soon.</p></div>;
