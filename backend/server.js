@@ -31,7 +31,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-MCN-Setup-Token"]
+  allowedHeaders: ["Content-Type", "X-MCN-Setup-Token", "Authorization"]
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
@@ -112,7 +112,7 @@ app.post("/api/auth/login", asyncRoute(async (req, res) => {
   );
   await pool.query("UPDATE newsroom_users SET last_login_at=now() WHERE id=$1", [user.id]);
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type) VALUES($1,'login','session')", [user.id]);
-  res.cookie("mcn_session", rawToken, cookieOptions).json({ ok: true, user: publicUser(user) });
+  res.cookie("mcn_session", rawToken, cookieOptions).json({ ok: true, user: publicUser(user), token: rawToken });
 }));
 
 const requireAuth = asyncRoute(async (req, res, next) => {
@@ -131,7 +131,7 @@ const allowRoles = (...roles) => (req, res, next) => roles.includes(req.user.rol
 
 app.get("/api/auth/me", requireAuth, (req, res) => res.json({ user: publicUser(req.user) }));
 app.post("/api/auth/logout", requireAuth, asyncRoute(async (req, res) => {
-  await pool.query("UPDATE newsroom_sessions SET revoked_at=now() WHERE token_hash=$1", [tokenHash(req.cookies.mcn_session)]);
+  await pool.query("UPDATE newsroom_sessions SET revoked_at=now() WHERE token_hash=$1", [tokenHash(req.sessionToken)]);
   res.clearCookie("mcn_session", { httpOnly: true, secure: true, sameSite: "none", path: "/" });
   res.json({ ok: true });
 }));
