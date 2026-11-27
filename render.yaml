@@ -14,6 +14,6 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: FRONTEND_ORIGINS
-        value: https://demtaiwo1-eng.github.io,https://www.massescoalitionfornigeria.com,https://massescoalitionfornigeria.com
+        value: https://demtaiwo1-eng.github.io,https://www.massescoalitionfornigeria.com,https://massescoalitionfornigeria.com,https://mcn-website-preview.onrender.com,https://mcn-website-dev-preview.onrender.com
       - key: MCN_SETUP_TOKEN
         sync: false
