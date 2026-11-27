@@ -343,6 +343,16 @@ app.get("/api/advanced/articles", asyncRoute(async (req,res) => {
   const rows=await pool.query("SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at FROM articles WHERE status='published' AND access_level='advanced' AND published_at<=now() ORDER BY published_at DESC LIMIT 50");
   res.json({email:access.rows[0].user_email,articles:rows.rows});
 }));
+app.get("/api/advanced/articles/:slug", asyncRoute(async (req,res) => {
+  const bearer=req.get("authorization")||"";
+  const token=bearer.startsWith("Bearer ")?bearer.slice(7):"";
+  if(!token) return res.status(401).json({error:"Activate an advanced-access PIN first."});
+  const access=await pool.query("SELECT user_email FROM advanced_access_sessions WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at>now()",[tokenHash(token)]);
+  if(!access.rowCount) return res.status(401).json({error:"Advanced access has expired or is invalid."});
+  const r=await pool.query("SELECT id,slug,title,dek,body_text,category,featured_image_url,featured_image_alt,published_at,seo_title,seo_description FROM articles WHERE slug=$1 AND status='published' AND access_level='advanced' AND published_at<=now()",[req.params.slug]);
+  if(!r.rowCount) return res.status(404).json({error:"Advanced article not found."});
+  res.json({article:r.rows[0]});
+}));
 app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:"draft-7",legacyHeaders:false}), asyncRoute(async (req,res) => {
   const email=String(req.body?.email||"").trim().toLowerCase();
   const pin=String(req.body?.pin||"").trim().toUpperCase();
