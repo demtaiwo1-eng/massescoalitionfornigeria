@@ -55,6 +55,12 @@ app.get("/health", asyncRoute(async (_req, res) => {
   res.json({ ok: true, service: "mcn-newsroom-api", database: "connected" });
 }));
 
+app.get("/api/setup/status", asyncRoute(async (_req,res) => {
+  const count=await pool.query("SELECT count(*)::int AS count FROM newsroom_users");
+  const setup=await pool.query("SELECT 1 FROM system_settings WHERE key='first_admin_created' LIMIT 1");
+  res.json({available:count.rows[0].count===0 && setup.rowCount===0});
+}));
+
 app.post("/api/setup/first-admin", asyncRoute(async (req, res) => {
   const setupToken = process.env.MCN_SETUP_TOKEN;
   if (!setupToken || !safeEqual(req.get("x-mcn-setup-token"), setupToken)) {
@@ -67,6 +73,7 @@ app.post("/api/setup/first-admin", asyncRoute(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(734921105)");
     const count = await client.query("SELECT count(*)::int AS count FROM newsroom_users");
     const setup = await client.query("SELECT value FROM system_settings WHERE key = 'first_admin_created' FOR UPDATE");
     if (count.rows[0].count !== 0 || setup.rowCount) {
