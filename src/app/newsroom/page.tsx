@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "@/components/site-link";
-import { FormEvent,useEffect,useState } from "react";
+import { ChangeEvent,FormEvent,useEffect,useState } from "react";
 import { useRouter } from "next/navigation";
-import { newsroomRequest } from "@/lib/newsroom-api";
+import { MCN_API_URL,newsroomRequest } from "@/lib/newsroom-api";
 
 type User={id:string;email:string;fullName:string;role:string};
 type Article={id:string;slug:string;title:string;category:string;status:string;updated_at:string;author_name:string;dek?:string|null;body_text?:string;featured_image_url?:string|null;featured_image_alt?:string|null;seo_title?:string|null;seo_description?:string|null};
@@ -19,7 +19,7 @@ export default function NewsroomDashboard(){
  const [user,setUser]=useState<User|null>(null);const [articles,setArticles]=useState<Article[]>([]);
  const [messages,setMessages]=useState<Message[]>([]);const [staff,setStaff]=useState<Staff[]>([]);const [pins,setPins]=useState<Pin[]>([]);
  const [panel,setPanel]=useState<Panel>("articles");const [loading,setLoading]=useState(true);const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [notice,setNotice]=useState("");
- const [showCreate,setShowCreate]=useState(false);const [editingId,setEditingId]=useState<string|null>(null);const [title,setTitle]=useState("");const [category,setCategory]=useState("Politics");const [dek,setDek]=useState("");const [body,setBody]=useState("");const [seoTitle,setSeoTitle]=useState("");const [seoDescription,setSeoDescription]=useState("");const [featuredImageUrl,setFeaturedImageUrl]=useState("");const [featuredImageAlt,setFeaturedImageAlt]=useState("");
+ const [showCreate,setShowCreate]=useState(false);const [editingId,setEditingId]=useState<string|null>(null);const [title,setTitle]=useState("");const [category,setCategory]=useState("Politics");const [dek,setDek]=useState("");const [body,setBody]=useState("");const [seoTitle,setSeoTitle]=useState("");const [seoDescription,setSeoDescription]=useState("");const [featuredImageUrl,setFeaturedImageUrl]=useState("");const [featuredImageAlt,setFeaturedImageAlt]=useState("");const [uploadingImage,setUploadingImage]=useState(false);
  const [staffName,setStaffName]=useState("");const [staffEmail,setStaffEmail]=useState("");const [staffPassword,setStaffPassword]=useState("");const [staffRole,setStaffRole]=useState("reporter");
  const [pinEmail,setPinEmail]=useState("");const [pinDays,setPinDays]=useState("30");const [newPin,setNewPin]=useState("");
 
@@ -38,6 +38,20 @@ export default function NewsroomDashboard(){
  }
  useEffect(()=>{void refresh();},[]);
  async function logout(){try{await newsroomRequest("/api/auth/logout",{method:"POST"});}finally{router.replace("/newsroom/sign-in/");}}
+ async function uploadFeaturedImage(event:ChangeEvent<HTMLInputElement>){
+  const selected=event.target.files?.[0];
+  if(!selected)return;
+  setUploadingImage(true);setError("");
+  try{
+   const form=new FormData();form.append("image",selected);form.append("altText",featuredImageAlt);
+   const session=window.sessionStorage.getItem("mcn_session_token");
+   const response=await fetch(MCN_API_URL+"/api/newsroom/media",{method:"POST",headers:session?{Authorization:"Bearer "+session}:{},body:form});
+   const result=await response.json();
+   if(!response.ok)throw new Error(result.error||"Image upload failed.");
+   setFeaturedImageUrl(MCN_API_URL+result.media.url);setNotice("Image uploaded.");
+  }catch(problem){setError(problem instanceof Error?problem.message:"Image upload failed.");}
+  finally{setUploadingImage(false);event.target.value="";}
+ }
  async function createArticle(e:FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setError("");setNotice("");
   const slug=title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
