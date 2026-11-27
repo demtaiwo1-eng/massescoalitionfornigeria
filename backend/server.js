@@ -7,6 +7,8 @@ const bcrypt = require("bcryptjs");
 const { Pool } = require("pg");
 const { randomBytes, createHash, timingSafeEqual } = require("node:crypto");
 const rateLimit = require("express-rate-limit");
+const multer = require("multer");
+const cron = require("node-cron");
 
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
@@ -35,6 +37,10 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
+const imageUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024 }, fileFilter: (_req,file,cb) => {
+  if (["image/jpeg","image/png","image/webp","image/gif"].includes(file.mimetype)) return cb(null,true);
+  cb(new Error("Upload a JPG, PNG, WebP or GIF image."));
+} });
 app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: "draft-7", legacyHeaders: false }));
 
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
