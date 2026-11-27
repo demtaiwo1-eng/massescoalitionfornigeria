@@ -130,17 +130,20 @@ app.post("/api/auth/logout", requireAuth, asyncRoute(async (req, res) => {
 }));
 
 app.get("/api/articles", asyncRoute(async (req, res) => {
-  const category = req.query.category;
+  const category = req.query.category ? String(req.query.category) : null;
+  const q = req.query.q ? String(req.query.q).trim().slice(0,120) : null;
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
   const values = [limit];
   let where = "status='published' AND published_at<=now()";
-  if (category) { values.push(String(category)); where += " AND category=$2"; }
+  if (category && validCategories.includes(category)) { values.push(category); where += \` AND category=$\${values.length}\`; }
+  if (q) { values.push(\`%\${q}%\`); where += \` AND (title ILIKE $\${values.length} OR dek ILIKE $\${values.length} OR body_text ILIKE $\${values.length})\`; }
   const rows = await pool.query(
-    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC LIMIT $1`,
+    \`SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE \${where} ORDER BY published_at DESC LIMIT $1\`,
     values
   );
   res.json({ articles: rows.rows });
 }));
+
 app.get("/api/articles/:slug", asyncRoute(async (req, res) => {
   const result = await pool.query(
     "SELECT id,slug,title,dek,body_json,body_text,category,featured_image_url,featured_image_alt,published_at,seo_title,seo_description FROM articles WHERE slug=$1 AND status='published' AND published_at<=now()",
@@ -222,21 +225,6 @@ app.post("/api/newsroom/articles/:id/publish", requireAuth, allowRoles("publishe
 
 const validCategories = ["Politics","Economy","Security","Education","Health","Society"];
 const validRoles = ["publisher","managing_editor","news_editor","reporter","contributor"];
-
-app.get("/api/articles", asyncRoute(async (req, res) => {
-  const category = req.query.category ? String(req.query.category) : null;
-  const q = req.query.q ? String(req.query.q).trim().slice(0,120) : null;
-  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
-  const values = [limit];
-  let where = "status='published' AND published_at<=now()";
-  if (category && validCategories.includes(category)) { values.push(category); where += ` AND category=${values.length}`; }
-  if (q) { values.push(`%${q.replace(/[\\%_]/g, "\\app.use((err, _req, res, _next) => {")} %`.replace(" %","%")); where += ` AND (title ILIKE ${values.length} OR dek ILIKE ${values.length} OR body_text ILIKE ${values.length})`; }
-  const rows = await pool.query(
-    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC LIMIT $1`,
-    values
-  );
-  res.json({ articles: rows.rows });
-}));
 
 const contactLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
 app.post("/api/contact", contactLimiter, asyncRoute(async (req,res) => {
