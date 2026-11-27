@@ -183,9 +183,11 @@ app.get("/api/newsroom/articles/:id/revisions", requireAuth, asyncRoute(async (r
   res.json({revisions:r.rows});
 }));
 app.get("/api/newsroom/articles", requireAuth, asyncRoute(async (req, res) => {
-  const result = await pool.query(
-    "SELECT a.id,a.slug,a.title,a.category,a.status,a.updated_at,a.published_at,u.full_name AS author_name FROM articles a JOIN newsroom_users u ON u.id=a.author_id ORDER BY a.updated_at DESC LIMIT 100"
-  );
+  const privileged = ["publisher","managing_editor","news_editor"].includes(req.user.role);
+  const query = privileged
+    ? "SELECT a.id,a.slug,a.title,a.category,a.status,a.updated_at,a.published_at,u.full_name AS author_name FROM articles a JOIN newsroom_users u ON u.id=a.author_id ORDER BY a.updated_at DESC LIMIT 100"
+    : "SELECT a.id,a.slug,a.title,a.category,a.status,a.updated_at,a.published_at,u.full_name AS author_name FROM articles a JOIN newsroom_users u ON u.id=a.author_id WHERE a.author_id=$1 ORDER BY a.updated_at DESC LIMIT 100";
+  const result = await pool.query(query, privileged ? [] : [req.user.id]);
   res.json({ articles: result.rows });
 }));
 app.post("/api/newsroom/articles", requireAuth, asyncRoute(async (req, res) => {
