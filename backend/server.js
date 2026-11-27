@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const { Pool } = require("pg");
 const { randomBytes, createHash, timingSafeEqual } = require("node:crypto");
 const rateLimit = require("express-rate-limit");
+const cron = require("node-cron");
 const multer = require("multer");
 const cron = require("node-cron");
 
@@ -245,6 +246,14 @@ app.post("/api/newsroom/articles/:id/review", requireAuth, allowRoles("publisher
   await pool.query("INSERT INTO editorial_reviews(article_id,reviewer_id,decision,notes) VALUES($1,$2,$3,$4)",[req.params.id,req.user.id,decision,notes||null]);
   res.json({ok:true,status:transitions[decision]});
 }));
+app.post("/api/newsroom/articles/:id/schedule", requireAuth, allowRoles("publisher","managing_editor"), asyncRoute(async (req,res) => {
+  const when=new Date(req.body?.scheduledAt);
+  if(Number.isNaN(when.getTime()) || when.getTime()<=Date.now()) return res.status(400).json({error:"Choose a valid future publication time."});
+  const r=await pool.query("UPDATE articles SET status='scheduled',scheduled_at=$2,updated_at=now() WHERE id=$1 AND status='approved' RETURNING id,scheduled_at",[req.params.id,when]);
+  if(!r.rowCount) return res.status(409).json({error:"Only approved articles can be scheduled."});
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'article_scheduled','article',$2)",[req.user.id,req.params.id]);
+  res.json({ok:true,scheduledAt:r.rows[0].scheduled_at});
+}));
 app.post("/api/newsroom/articles/:id/publish", requireAuth, allowRoles("publisher","managing_editor"), asyncRoute(async (req,res) => {
   const r = await pool.query("UPDATE articles SET status='published',published_at=now(),updated_at=now() WHERE id=$1 AND status='approved' RETURNING slug",[req.params.id]);
   if (!r.rowCount) return res.status(409).json({error:"Only approved articles can be published."});
@@ -348,4 +357,5 @@ app.use((err, _req, res, _next) => {
   if (err.code === "23505") return res.status(409).json({error:"That record already exists."});
   res.status(500).json({error:"An unexpected server error occurred."});
 });
+cron.schedule("* * * * *", async () => { try { await pool.query("UPDATE articles SET status='published',published_at=scheduled_at,updated_at=now() WHERE status='scheduled' AND scheduled_at<=now()"); } catch(e) { console.error("Scheduled publication failed:",e.message); } });
 app.listen(PORT, () => console.log(`MCN newsroom API listening on ${PORT}`));
