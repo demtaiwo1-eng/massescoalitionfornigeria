@@ -37,7 +37,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
-const imageUpload = multer({storage:multer.memoryStorage(),limits:{fileSize:3*1024*1024},fileFilter:(_req,file,cb)=>["image/jpeg","image/png","image/webp"].includes(file.mimetype)?cb(null,true):cb(new Error("Upload a JPG, PNG or WebP image."))});
 const imageUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024 }, fileFilter: (_req,file,cb) => {
   if (["image/jpeg","image/png","image/webp","image/gif"].includes(file.mimetype)) return cb(null,true);
   cb(new Error("Upload a JPG, PNG, WebP or GIF image."));
