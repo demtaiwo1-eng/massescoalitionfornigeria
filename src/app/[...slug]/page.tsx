@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/site-link";
 import { notFound } from "next/navigation";
 import SiteSearch from "../../components/site-search";
 import PublicArticles from "../../components/public-articles";
