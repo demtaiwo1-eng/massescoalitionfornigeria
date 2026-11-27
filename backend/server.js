@@ -142,10 +142,10 @@ app.get("/api/articles", asyncRoute(async (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
   const values = [limit];
   let where = "status='published' AND published_at<=now()";
-  if (category && validCategories.includes(category)) { values.push(category); where += \` AND category=$\${values.length}\`; }
-  if (q) { values.push(\`%\${q}%\`); where += \` AND (title ILIKE $\${values.length} OR dek ILIKE $\${values.length} OR body_text ILIKE $\${values.length})\`; }
+  if (category && validCategories.includes(category)) { values.push(category); where += ` AND category=$${values.length}`; }
+  if (q) { values.push(`%${q}%`); where += ` AND (title ILIKE $${values.length} OR dek ILIKE $${values.length} OR body_text ILIKE $${values.length})`; }
   const rows = await pool.query(
-    \`SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE \${where} ORDER BY published_at DESC LIMIT $1\`,
+    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC LIMIT $1`,
     values
   );
   res.json({ articles: rows.rows });
