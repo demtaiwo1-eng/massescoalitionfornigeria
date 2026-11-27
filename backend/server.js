@@ -9,6 +9,7 @@ const { randomBytes, createHash, timingSafeEqual } = require("node:crypto");
 const rateLimit = require("express-rate-limit");
 const cron = require("node-cron");
 const multer = require("multer");
+const multer = require("multer");
 const cron = require("node-cron");
 
 const app = express();
@@ -38,6 +39,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
+const imageUpload = multer({storage:multer.memoryStorage(),limits:{fileSize:3*1024*1024},fileFilter:(_req,file,cb)=>["image/jpeg","image/png","image/webp"].includes(file.mimetype)?cb(null,true):cb(new Error("Upload a JPG, PNG or WebP image."))});
 const imageUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024 }, fileFilter: (_req,file,cb) => {
   if (["image/jpeg","image/png","image/webp","image/gif"].includes(file.mimetype)) return cb(null,true);
   cb(new Error("Upload a JPG, PNG, WebP or GIF image."));
@@ -352,7 +354,22 @@ app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standar
   }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
 }));
 
+app.post("/api/newsroom/media", requireAuth, imageUpload.single("image"), asyncRoute(async (req,res) => {
+  if(!req.file) return res.status(400).json({error:"Choose an image to upload."});
+  const b=req.file.buffer;
+  const ok=(req.file.mimetype==="image/jpeg" && b[0]===255 && b[1]===216 && b[2]===255) || (req.file.mimetype==="image/png" && b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) || (req.file.mimetype==="image/webp" && b.toString("ascii",0,4)==="RIFF" && b.toString("ascii",8,12)==="WEBP");
+  if(!ok) return res.status(400).json({error:"The uploaded file does not match its image type."});
+  const alt=String(req.body?.altText||"").trim().slice(0,300);
+  const r=await pool.query("INSERT INTO newsroom_media(file_name,mime_type,byte_size,alt_text,data,uploaded_by) VALUES($1,$2,$3,$4,$5,$6) RETURNING id,file_name,mime_type,byte_size,alt_text,created_at",[req.file.originalname.slice(0,180),req.file.mimetype,req.file.size,alt,b,req.user.id]);
+  res.status(201).json({media:{...r.rows[0],url:"/api/media/"+r.rows[0].id}});
+}));
+app.get("/api/media/:id", asyncRoute(async (req,res) => {
+  const r=await pool.query("SELECT mime_type,data FROM newsroom_media WHERE id=$1",[req.params.id]);
+  if(!r.rowCount) return res.status(404).end();
+  res.set("Content-Type",r.rows[0].mime_type).set("Cache-Control","public, max-age=31536000, immutable").set("X-Content-Type-Options","nosniff").send(r.rows[0].data);
+}));
 app.use((err, _req, res, _next) => {
+  if(err instanceof multer.MulterError) return res.status(400).json({error:err.code==="LIMIT_FILE_SIZE"?"Image must be 3 MB or smaller.":err.message});
   console.error("MCN API error:", err.message);
   if (err.code === "23505") return res.status(409).json({error:"That record already exists."});
   res.status(500).json({error:"An unexpected server error occurred."});
