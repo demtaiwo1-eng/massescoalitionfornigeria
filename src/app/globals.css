@@ -112,3 +112,6 @@
 .issued-pin button{justify-self:start;padding:8px 12px}
 @media(max-width:850px){.public-article-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.contact-layout{grid-template-columns:1fr;gap:25px}}
 @media(max-width:560px){.public-article-grid{grid-template-columns:1fr}.public-article-card>a img{height:210px}.contact-form{padding:18px}.newsroom-content{padding-left:14px;padding-right:14px}.newsroom-tabs{gap:0}.newsroom-tabs button{padding:12px 9px;font-size:11px}.story-article{padding:22px 18px}.story-body{font-size:16px}}
+
+
+.newsroom-image-preview{display:block;width:min(100%,520px);max-height:320px;object-fit:cover;border:1px solid #dce5dc;background:#f4f6f2;margin:4px 0 12px}.article-create-form input[type=file]{padding:10px;background:#f8faf7}.article-create-form details{display:grid;gap:12px}.article-create-form details summary{cursor:pointer;color:#1d6540;font-weight:700}.subpage-foot{display:flex;flex-wrap:wrap;gap:18px}
