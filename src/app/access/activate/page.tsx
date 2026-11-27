@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/site-link";
 import AccessActivationForm from "../../../components/access-activation-form";
 
 export const metadata={title:"Activate Advanced Access",description:"Activate a single-use advanced access PIN issued by the MCN publisher."};
