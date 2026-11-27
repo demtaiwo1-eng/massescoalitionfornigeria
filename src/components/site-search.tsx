@@ -8,6 +8,9 @@ const API="https://mcn-newsroom-api.onrender.com";
 const pages=[
  {title:"About Masses Coalition of Nigeria",section:"About",href:"/about/",description:"Our mission and public-interest journalism."},
  {title:"Editorial principles",section:"Editorial policy",href:"/editorial-policy/",description:"Accuracy, verification, corrections and responsible reporting."},
+ {title:"Corrections and clarifications",section:"Corrections",href:"/corrections/",description:"How we correct material errors and clarify published reports."},
+ {title:"Privacy notice",section:"Privacy",href:"/privacy/",description:"How reader and source information is handled."},
+ {title:"Website terms of use",section:"Terms",href:"/terms/",description:"Responsible use and reuse of published work."},
  {title:"Contact the newsroom",section:"Contact",href:"/contact/",description:"News tips, corrections and editorial enquiries."},
  {title:"Latest stories",section:"Latest",href:"/latest/",description:"The latest reports published by the newsroom."},
  {title:"All coverage categories",section:"Categories",href:"/categories/",description:"Browse all reporting topics."},
