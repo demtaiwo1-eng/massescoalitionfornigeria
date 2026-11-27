@@ -33,7 +33,8 @@ export default function HomePage() {
         </div>
       </section>
       <section className="ticker"><div className="wrap ticker-inner"><span className="ticker-label"><Radio size={15}/> NEWS DESK</span><span>We are building an independent home for verified Nigerian stories.</span><Link href="/about/">Our editorial promise <ArrowRight size={14}/></Link></div></section>
-      <section className="wrap section-block"><div className="section-heading"><div><div className="eyebrow">LATEST FROM THE NEWSROOM</div><h2>Reporting that <em>matters.</em></h2></div><Link href="/latest/" className="text-button">All latest stories <ArrowRight size={16}/></Link></div><PublicArticles limit={3}/></section>\n      <section className="wrap section-block">
+      <section className="wrap section-block"><div className="section-heading"><div><div className="eyebrow">LATEST FROM THE NEWSROOM</div><h2>Reporting that <em>matters.</em></h2></div><Link href="/latest/" className="text-button">All latest stories <ArrowRight size={16}/></Link></div><PublicArticles limit={3}/></section>
+      <section className="wrap section-block">
         <div className="section-heading"><div><div className="eyebrow">EXPLORE OUR COVERAGE</div><h2>Stories across <em>every sector.</em></h2></div><Link href="/categories/" className="text-button">All categories <ArrowRight size={16}/></Link></div>
         <div className="category-grid">{sections.map((s, i) => <Link className="category-card" key={s} href={`/category/${s.toLowerCase()}/`}><span className="category-number">0{i+1}</span><strong>{s}</strong><ArrowRight size={17}/></Link>)}</div>
       </section>
