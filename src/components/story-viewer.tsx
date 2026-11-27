@@ -10,8 +10,8 @@ export default function StoryViewer(){
  const params=useSearchParams();const slug=params.get("slug");
  const [article,setArticle]=useState<Article|null>(null);const [error,setError]=useState("");const [loading,setLoading]=useState(true);
  useEffect(()=>{if(!slug){setError("No article was selected.");setLoading(false);return;}const controller=new AbortController();
-  fetch(API+"/api/articles/"+encodeURIComponent(slug),{signal:controller.signal}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Article not found.");return d.article;})
-   .then(setArticle).catch(e=>{if(e.name!=="AbortError")setError(e.message);}).finally(()=>setLoading(false));
+  (async()=>{const token=window.sessionStorage.getItem("mcn_advanced_access_token");let response:Response|null=null;if(token){response=await fetch(API+"/api/advanced/articles/"+encodeURIComponent(slug),{signal:controller.signal,headers:{Authorization:"Bearer "+token}});}if(!response||!response.ok){response=await fetch(API+"/api/articles/"+encodeURIComponent(slug),{signal:controller.signal});}const data=await response.json();if(!response.ok)throw new Error(data.error||"Article not found.");setArticle(data.article);})()
+   .catch(e=>{if(e.name!=="AbortError")setError(e.message);}).finally(()=>setLoading(false));
   return()=>controller.abort();
  },[slug]);
  return <main className="story-page"><div className="wrap story-wrap"><Link href="/latest/" className="back-link">← Back to latest stories</Link>
