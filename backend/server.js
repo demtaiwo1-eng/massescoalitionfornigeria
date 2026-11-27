@@ -143,7 +143,7 @@ app.get("/api/articles", asyncRoute(async (req, res) => {
   const q = req.query.q ? String(req.query.q).trim().slice(0,120) : null;
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
   const values = [limit];
-  let where = "status='published' AND published_at<=now()";
+  let where = "status='published' AND access_level='public' AND published_at<=now()";
   if (category && validCategories.includes(category)) { values.push(category); where += ` AND category=$${values.length}`; }
   if (q) { values.push(`%${q}%`); where += ` AND (title ILIKE $${values.length} OR dek ILIKE $${values.length} OR body_text ILIKE $${values.length})`; }
   const rows = await pool.query(
@@ -155,7 +155,7 @@ app.get("/api/articles", asyncRoute(async (req, res) => {
 
 app.get("/api/articles/:slug", asyncRoute(async (req, res) => {
   const result = await pool.query(
-    "SELECT id,slug,title,dek,body_json,body_text,category,featured_image_url,featured_image_alt,published_at,seo_title,seo_description FROM articles WHERE slug=$1 AND status='published' AND published_at<=now()",
+    "SELECT id,slug,title,dek,body_json,body_text,category,featured_image_url,featured_image_alt,published_at,seo_title,seo_description FROM articles WHERE slug=$1 AND status='published' AND access_level='public' AND published_at<=now()",
     [req.params.slug]
   );
   if (!result.rowCount) return res.status(404).json({ error: "Article not found." });
@@ -169,13 +169,13 @@ app.get("/api/newsroom/articles", requireAuth, asyncRoute(async (req, res) => {
   res.json({ articles: result.rows });
 }));
 app.post("/api/newsroom/articles", requireAuth, asyncRoute(async (req, res) => {
-  const { title, slug, dek, bodyJson, bodyText, category, featuredImageUrl, featuredImageAlt, seoTitle, seoDescription } = req.body || {};
+  const { title, slug, dek, bodyJson, bodyText, category, featuredImageUrl, featuredImageAlt, seoTitle, seoDescription, accessLevel } = req.body || {};
   const validCategories = ["Politics","Economy","Security","Education","Health","Society"];
   if (!title || !slug || !validCategories.includes(category)) return res.status(400).json({ error: "Title, slug and a valid category are required." });
   const safeSlug = String(slug).toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-|-$/g,"");
   const result = await pool.query(
-    "INSERT INTO articles(slug,title,dek,body_json,body_text,category,featured_image_url,featured_image_alt,author_id,seo_title,seo_description) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *",
-    [safeSlug,title,dek||null,JSON.stringify(bodyJson||{}),bodyText||"",category,featuredImageUrl||null,featuredImageAlt||null,req.user.id,seoTitle||null,seoDescription||null]
+    "INSERT INTO articles(slug,title,dek,body_json,body_text,category,featured_image_url,featured_image_alt,author_id,seo_title,seo_description,access_level) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *",
+    [safeSlug,title,dek||null,JSON.stringify(bodyJson||{}),bodyText||"",category,featuredImageUrl||null,featuredImageAlt||null,req.user.id,seoTitle||null,seoDescription||null,accessLevel==="advanced" && ["publisher","managing_editor"].includes(req.user.role) ? "advanced" : "public"]
   );
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'article_created','article',$2)",[req.user.id,result.rows[0].id]);
   res.status(201).json({ article: result.rows[0] });
@@ -241,7 +241,7 @@ app.post("/api/contact", contactLimiter, asyncRoute(async (req,res) => {
   if (website) return res.status(200).json({ok:true});
   if (![name,email,subject,message].every(v => typeof v === "string" && v.trim())) return res.status(400).json({error:"Please complete every field."});
   if (name.length>120 || email.length>254 || subject.length>180 || message.length>5000) return res.status(400).json({error:"One or more fields are too long."});
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return res.status(400).json({error:"Enter a valid email address."});
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:"Enter a valid email address."});
   await pool.query("INSERT INTO contact_messages(name,email,subject,message) VALUES($1,$2,$3,$4)",[name.trim(),email.trim().toLowerCase(),subject.trim(),message.trim()]);
   res.status(201).json({ok:true,message:"Your message has been delivered to the newsroom inbox."});
 }));
@@ -276,7 +276,7 @@ app.post("/api/newsroom/users", requireAuth, allowRoles("publisher"), asyncRoute
 app.patch("/api/newsroom/users/:id", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
   if (req.params.id===req.user.id) return res.status(400).json({error:"You cannot change your own role or access here."});
   const {role,isActive} = req.body || {};
-  if (role!==undefined && !validRoles.includes(role)) return res.status(400).json({error:"Invalid newsroom role."});
+  if (role!==undefined && (!validRoles.includes(role) || role==="publisher")) return res.status(400).json({error:"Publisher is reserved for the first owner account. Choose another newsroom role."});
   const r = await pool.query("UPDATE newsroom_users SET role=COALESCE($2,role),is_active=COALESCE($3,is_active),updated_at=now() WHERE id=$1 RETURNING id,email,full_name,role,is_active",[req.params.id,role??null,isActive??null]);
   if (!r.rowCount) return res.status(404).json({error:"Staff account not found."});
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'staff_account_updated','user',$2)",[req.user.id,req.params.id]);
@@ -290,7 +290,7 @@ app.get("/api/newsroom/access-pins", requireAuth, allowRoles("publisher"), async
 app.post("/api/newsroom/access-pins", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
   const email=String(req.body?.email||"").trim().toLowerCase();
   const days=Math.min(Math.max(Number(req.body?.expiresInDays)||30,1),365);
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return res.status(400).json({error:"Enter a valid customer email."});
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:"Enter a valid customer email."});
   const pin=randomBytes(8).toString("hex").toUpperCase().match(/.{1,4}/g).join("-");
   const expiresAt=new Date(Date.now()+days*86400000);
   const r=await pool.query("INSERT INTO advanced_access_pins(pin_hash,customer_email,access_level,expires_at,max_uses,issued_by) VALUES($1,$2,'advanced',$3,1,$4) RETURNING id,customer_email,access_level,expires_at,created_at",[tokenHash(pin),email,expiresAt,req.user.id]);
@@ -306,7 +306,7 @@ app.post("/api/newsroom/access-pins/:id/revoke", requireAuth, allowRoles("publis
 app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:"draft-7",legacyHeaders:false}), asyncRoute(async (req,res) => {
   const email=String(req.body?.email||"").trim().toLowerCase();
   const pin=String(req.body?.pin||"").trim().toUpperCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||!/^[A-F0-9]{4}(?:-[A-F0-9]{4}){3}$/.test(pin)) return res.status(400).json({error:"Enter the email address the PIN was issued to and the complete PIN."});
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[A-F0-9]{4}(?:-[A-F0-9]{4}){3}$/.test(pin)) return res.status(400).json({error:"Enter the email address the PIN was issued to and the complete PIN."});
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
