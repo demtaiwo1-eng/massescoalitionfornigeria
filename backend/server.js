@@ -334,6 +334,15 @@ app.post("/api/newsroom/access-pins/:id/revoke", requireAuth, allowRoles("publis
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'access_pin_revoked','access_pin',$2)",[req.user.id,req.params.id]);
   res.json({ok:true});
 }));
+app.get("/api/advanced/articles", asyncRoute(async (req,res) => {
+  const bearer=req.get("authorization")||"";
+  const token=bearer.startsWith("Bearer ")?bearer.slice(7):"";
+  if(!token) return res.status(401).json({error:"Activate an advanced-access PIN first."});
+  const access=await pool.query("SELECT user_email FROM advanced_access_sessions WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at>now()",[tokenHash(token)]);
+  if(!access.rowCount) return res.status(401).json({error:"Advanced access has expired or is invalid."});
+  const rows=await pool.query("SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at FROM articles WHERE status='published' AND access_level='advanced' AND published_at<=now() ORDER BY published_at DESC LIMIT 50");
+  res.json({email:access.rows[0].user_email,articles:rows.rows});
+}));
 app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:"draft-7",legacyHeaders:false}), asyncRoute(async (req,res) => {
   const email=String(req.body?.email||"").trim().toLowerCase();
   const pin=String(req.body?.pin||"").trim().toUpperCase();
@@ -348,8 +357,11 @@ app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standar
     }
     await client.query("UPDATE advanced_access_pins SET uses=uses+1 WHERE id=$1",[p.id]);
     await client.query("INSERT INTO access_activations(pin_id,user_email) VALUES($1,$2)",[p.id,email]);
+    const accessToken=randomBytes(32).toString("base64url");
+    const expiresAt=new Date(Date.now()+7*86400000);
+    await client.query("INSERT INTO advanced_access_sessions(token_hash,user_email,access_level,expires_at) VALUES($1,$2,$3,$4)",[tokenHash(accessToken),email,p.access_level,expiresAt]);
     await client.query("COMMIT");
-    res.json({ok:true,accessLevel:p.access_level,activatedAt:new Date().toISOString(),email});
+    res.json({ok:true,accessLevel:p.access_level,activatedAt:new Date().toISOString(),expiresAt,email,accessToken});
   }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
 }));
 
