@@ -55,7 +55,7 @@ export default function NewsroomDashboard(){
  async function createArticle(e:FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setError("");setNotice("");
   const slug=title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-  try{await newsroomRequest("/api/newsroom/articles",{method:"POST",body:JSON.stringify({title,slug,category,dek,bodyText:body,bodyJson:{text:body},seoTitle,seoDescription})});
+  try{await newsroomRequest("/api/newsroom/articles",{method:"POST",body:JSON.stringify({title,slug,category,dek,bodyText:body,bodyJson:{text:body},seoTitle,seoDescription,featuredImageUrl,featuredImageAlt})});
    setTitle("");setDek("");setBody("");setSeoTitle("");setSeoDescription("");setShowCreate(false);setNotice("Draft saved.");await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Could not save article.");}finally{setBusy(false);}
  }
