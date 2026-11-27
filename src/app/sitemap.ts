@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.SITE_URL || "https://www.massescoalitionfornigeria.com";
   const pages = ["", "/about", "/editorial-policy", "/corrections", "/privacy", "/terms", "/contact", "/latest", "/categories", "/search", "/access/activate", ...categories.map(c => `/category/${c}`)];
   return pages.map(path => ({
-    url: `${base}${path}`,
+    url: `${base}${path}/`,
     lastModified: new Date(),
     changeFrequency: path === "" ? "daily" : "weekly",
     priority: path === "" ? 1 : 0.7,
