@@ -13,7 +13,10 @@ export default function NewsroomSignIn() {
   const [password,setPassword] = useState("");
   const [setupToken,setSetupToken] = useState("");
   const [message,setMessage] = useState("");
-  const [busy,setBusy] = useState(false);\n  const [setupAvailable,setSetupAvailable] = useState(false);\n\n  useEffect(()=>{void newsroomRequest<{available:boolean}>("/api/setup/status").then(r=>setSetupAvailable(r.available)).catch(()=>setSetupAvailable(false));},[]);
+  const [busy,setBusy] = useState(false);
+  const [setupAvailable,setSetupAvailable] = useState(false);
+
+  useEffect(()=>{void newsroomRequest<{available:boolean}>("/api/setup/status").then(r=>setSetupAvailable(r.available)).catch(()=>setSetupAvailable(false));},[]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setMessage("");
