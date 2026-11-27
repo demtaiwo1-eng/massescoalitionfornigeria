@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { newsroomRequest } from "@/lib/newsroom-api";
 
@@ -13,14 +13,14 @@ export default function NewsroomSignIn() {
   const [password,setPassword] = useState("");
   const [setupToken,setSetupToken] = useState("");
   const [message,setMessage] = useState("");
-  const [busy,setBusy] = useState(false);
+  const [busy,setBusy] = useState(false);\n  const [setupAvailable,setSetupAvailable] = useState(false);\n\n  useEffect(()=>{void newsroomRequest<{available:boolean}>("/api/setup/status").then(r=>setSetupAvailable(r.available)).catch(()=>setSetupAvailable(false));},[]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setMessage("");
     try {
       if (mode === "setup") {
         await newsroomRequest("/api/setup/first-admin",{method:"POST",headers:{"x-mcn-setup-token":setupToken},body:JSON.stringify({email,fullName,password})});
-        setMode("login"); setMessage("Publisher account created. Sign in with the email and password you just registered.");
+        setMode("login"); setSetupAvailable(false); setMessage("Publisher account created. Sign in with the email and password you just registered.");
       } else {
         await newsroomRequest("/api/auth/login",{method:"POST",body:JSON.stringify({email,password})});
         router.push("/newsroom/");
@@ -42,7 +42,7 @@ export default function NewsroomSignIn() {
       <button className="primary-button" type="submit" disabled={busy}>{busy ? "Please wait…" : mode==="setup" ? "Create Publisher account" : "Sign in securely"}</button>
     </form>
     {message && <p role="status" className="notice">{message}</p>}
-    <button type="button" className="signin-mode-toggle" onClick={()=>{setMode(mode==="login"?"setup":"login");setMessage("");}}> {mode==="login"?"First-time Publisher setup":"Back to sign in"} </button>
+    {setupAvailable && <button type="button" className="signin-mode-toggle" onClick={()=>{setMode(mode==="login"?"setup":"login");setMessage("");}}> {mode==="login"?"First-time Publisher setup":"Back to sign in"} </button>}
     <p className="notice">Public readers do not need a newsroom account or activation PIN to read published stories.</p>
     <Link className="text-link" href="/">Return to public website</Link>
   </div></main>;
