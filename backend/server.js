@@ -10,7 +10,7 @@ const rateLimit = require("express-rate-limit");
 
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "https://demtaiwo1-eng.github.io";
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || process.env.FRONTEND_ORIGIN || "https://demtaiwo1-eng.github.io,https://www.massescoalitionfornigeria.com,https://massescoalitionfornigeria.com").split(",").map(x => x.trim()).filter(Boolean);
 const SESSION_DAYS = 7;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -25,7 +25,7 @@ app.disable("x-powered-by");
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({
   origin(origin, callback) {
-    const allowed = [FRONTEND_ORIGIN, "http://localhost:3000", "http://127.0.0.1:3000"];
+    const allowed = [...FRONTEND_ORIGINS, "http://localhost:3000", "http://127.0.0.1:3000"];
     if (!origin || allowed.includes(origin)) return callback(null, true);
     return callback(new Error("Origin not allowed"));
   },
@@ -217,6 +217,112 @@ app.post("/api/newsroom/articles/:id/publish", requireAuth, allowRoles("publishe
   if (!r.rowCount) return res.status(409).json({error:"Only approved articles can be published."});
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'article_published','article',$2)",[req.user.id,req.params.id]);
   res.json({ok:true,slug:r.rows[0].slug});
+}));
+
+
+const validCategories = ["Politics","Economy","Security","Education","Health","Society"];
+const validRoles = ["publisher","managing_editor","news_editor","reporter","contributor"];
+
+app.get("/api/articles", asyncRoute(async (req, res) => {
+  const category = req.query.category ? String(req.query.category) : null;
+  const q = req.query.q ? String(req.query.q).trim().slice(0,120) : null;
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
+  const values = [limit];
+  let where = "status='published' AND published_at<=now()";
+  if (category && validCategories.includes(category)) { values.push(category); where += ` AND category=${values.length}`; }
+  if (q) { values.push(`%${q.replace(/[\\%_]/g, "\\app.use((err, _req, res, _next) => {")} %`.replace(" %","%")); where += ` AND (title ILIKE ${values.length} OR dek ILIKE ${values.length} OR body_text ILIKE ${values.length})`; }
+  const rows = await pool.query(
+    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC LIMIT $1`,
+    values
+  );
+  res.json({ articles: rows.rows });
+}));
+
+const contactLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
+app.post("/api/contact", contactLimiter, asyncRoute(async (req,res) => {
+  const { name,email,subject,message,website } = req.body || {};
+  if (website) return res.status(200).json({ok:true});
+  if (![name,email,subject,message].every(v => typeof v === "string" && v.trim())) return res.status(400).json({error:"Please complete every field."});
+  if (name.length>120 || email.length>254 || subject.length>180 || message.length>5000) return res.status(400).json({error:"One or more fields are too long."});
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return res.status(400).json({error:"Enter a valid email address."});
+  await pool.query("INSERT INTO contact_messages(name,email,subject,message) VALUES($1,$2,$3,$4)",[name.trim(),email.trim().toLowerCase(),subject.trim(),message.trim()]);
+  res.status(201).json({ok:true,message:"Your message has been delivered to the newsroom inbox."});
+}));
+
+app.get("/api/newsroom/messages", requireAuth, allowRoles("publisher","managing_editor","news_editor"), asyncRoute(async (_req,res) => {
+  const r = await pool.query("SELECT id,name,email,subject,message,status,created_at,read_at FROM contact_messages ORDER BY created_at DESC LIMIT 100");
+  res.json({messages:r.rows});
+}));
+app.patch("/api/newsroom/messages/:id", requireAuth, allowRoles("publisher","managing_editor","news_editor"), asyncRoute(async (req,res) => {
+  const status = req.body?.status;
+  if (!["read","replied","archived"].includes(status)) return res.status(400).json({error:"Invalid message status."});
+  const r = await pool.query("UPDATE contact_messages SET status=$2,read_at=CASE WHEN $2='read' THEN COALESCE(read_at,now()) ELSE read_at END WHERE id=$1 RETURNING id,status",[req.params.id,status]);
+  if (!r.rowCount) return res.status(404).json({error:"Message not found."});
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'contact_message_updated','contact_message',$2)",[req.user.id,req.params.id]);
+  res.json({message:r.rows[0]});
+}));
+
+app.get("/api/newsroom/users", requireAuth, allowRoles("publisher"), asyncRoute(async (_req,res) => {
+  const r = await pool.query("SELECT id,email,full_name,role,is_active,created_at,last_login_at FROM newsroom_users ORDER BY created_at ASC");
+  res.json({users:r.rows});
+}));
+app.post("/api/newsroom/users", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
+  const {email,fullName,password,role} = req.body || {};
+  if (!email || !fullName || typeof password!=="string" || password.length<14 || !validRoles.includes(role) || role==="publisher") {
+    return res.status(400).json({error:"Provide a valid staff email, full name, role and a password of at least 14 characters. Publisher access is not assignable here."});
+  }
+  const hash = await bcrypt.hash(password,12);
+  const r = await pool.query("INSERT INTO newsroom_users(email,full_name,password_hash,role) VALUES($1,$2,$3,$4) RETURNING id,email,full_name,role,is_active,created_at",[String(email).trim().toLowerCase(),String(fullName).trim(),hash,role]);
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'staff_account_created','user',$2,$3)",[req.user.id,r.rows[0].id,JSON.stringify({email:r.rows[0].email,role})]);
+  res.status(201).json({user:r.rows[0]});
+}));
+app.patch("/api/newsroom/users/:id", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
+  if (req.params.id===req.user.id) return res.status(400).json({error:"You cannot change your own role or access here."});
+  const {role,isActive} = req.body || {};
+  if (role!==undefined && !validRoles.includes(role)) return res.status(400).json({error:"Invalid newsroom role."});
+  const r = await pool.query("UPDATE newsroom_users SET role=COALESCE($2,role),is_active=COALESCE($3,is_active),updated_at=now() WHERE id=$1 RETURNING id,email,full_name,role,is_active",[req.params.id,role??null,isActive??null]);
+  if (!r.rowCount) return res.status(404).json({error:"Staff account not found."});
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'staff_account_updated','user',$2)",[req.user.id,req.params.id]);
+  res.json({user:r.rows[0]});
+}));
+
+app.get("/api/newsroom/access-pins", requireAuth, allowRoles("publisher"), asyncRoute(async (_req,res) => {
+  const r = await pool.query("SELECT id,customer_email,access_level,expires_at,max_uses,uses,revoked_at,created_at FROM advanced_access_pins ORDER BY created_at DESC LIMIT 100");
+  res.json({pins:r.rows});
+}));
+app.post("/api/newsroom/access-pins", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
+  const email=String(req.body?.email||"").trim().toLowerCase();
+  const days=Math.min(Math.max(Number(req.body?.expiresInDays)||30,1),365);
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return res.status(400).json({error:"Enter a valid customer email."});
+  const pin=randomBytes(8).toString("hex").toUpperCase().match(/.{1,4}/g).join("-");
+  const expiresAt=new Date(Date.now()+days*86400000);
+  const r=await pool.query("INSERT INTO advanced_access_pins(pin_hash,customer_email,access_level,expires_at,max_uses,issued_by) VALUES($1,$2,'advanced',$3,1,$4) RETURNING id,customer_email,access_level,expires_at,created_at",[tokenHash(pin),email,expiresAt,req.user.id]);
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'access_pin_issued','access_pin',$2,$3)",[req.user.id,r.rows[0].id,JSON.stringify({email,expiresAt})]);
+  res.status(201).json({pin,record:r.rows[0],message:"Copy this PIN now. It is shown only once and is bound to the supplied email."});
+}));
+app.post("/api/newsroom/access-pins/:id/revoke", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
+  const r=await pool.query("UPDATE advanced_access_pins SET revoked_at=now() WHERE id=$1 AND revoked_at IS NULL RETURNING id",[req.params.id]);
+  if(!r.rowCount) return res.status(404).json({error:"Active PIN not found."});
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'access_pin_revoked','access_pin',$2)",[req.user.id,req.params.id]);
+  res.json({ok:true});
+}));
+app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:"draft-7",legacyHeaders:false}), asyncRoute(async (req,res) => {
+  const email=String(req.body?.email||"").trim().toLowerCase();
+  const pin=String(req.body?.pin||"").trim().toUpperCase();
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||!/^[A-F0-9]{4}(?:-[A-F0-9]{4}){3}$/.test(pin)) return res.status(400).json({error:"Enter the email address the PIN was issued to and the complete PIN."});
+  const client=await pool.connect();
+  try{
+    await client.query("BEGIN");
+    const found=await client.query("SELECT id,customer_email,access_level,expires_at,max_uses,uses,revoked_at FROM advanced_access_pins WHERE pin_hash=$1 FOR UPDATE",[tokenHash(pin)]);
+    const p=found.rows[0];
+    if(!p||p.customer_email!==email||p.revoked_at||p.uses>=p.max_uses||(p.expires_at&&new Date(p.expires_at)<=new Date())){
+      await client.query("ROLLBACK");return res.status(400).json({error:"This PIN is invalid, expired, revoked or already used."});
+    }
+    await client.query("UPDATE advanced_access_pins SET uses=uses+1 WHERE id=$1",[p.id]);
+    await client.query("INSERT INTO access_activations(pin_id,user_email) VALUES($1,$2)",[p.id,email]);
+    await client.query("COMMIT");
+    res.json({ok:true,accessLevel:p.access_level,activatedAt:new Date().toISOString(),email});
+  }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
 }));
 
 app.use((err, _req, res, _next) => {
