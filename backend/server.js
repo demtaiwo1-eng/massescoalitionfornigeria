@@ -116,8 +116,10 @@ app.post("/api/auth/login", asyncRoute(async (req, res) => {
 }));
 
 const requireAuth = asyncRoute(async (req, res, next) => {
-  const token = req.cookies.mcn_session;
+  const bearer = req.get("authorization") || "";
+  const token = req.cookies.mcn_session || (bearer.startsWith("Bearer ") ? bearer.slice(7) : null);
   if (!token) return res.status(401).json({ error: "Sign in required." });
+  req.sessionToken = token;
   const result = await pool.query(
     "SELECT u.id,u.email,u.full_name,u.role FROM newsroom_sessions s JOIN newsroom_users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND u.is_active=true",
     [tokenHash(token)]
