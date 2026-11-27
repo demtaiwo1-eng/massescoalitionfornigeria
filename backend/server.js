@@ -147,16 +147,22 @@ app.post("/api/auth/logout", requireAuth, asyncRoute(async (req, res) => {
 app.get("/api/articles", asyncRoute(async (req, res) => {
   const category = req.query.category ? String(req.query.category) : null;
   const q = req.query.q ? String(req.query.q).trim().slice(0,120) : null;
+  if (category && !validCategories.includes(category)) return res.status(400).json({ error: "Unknown article category." });
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
-  const values = [limit];
+  const page = Math.min(Math.max(Number.parseInt(String(req.query.page || "1"), 10) || 1, 1), 100000);
+  const offset = (page - 1) * limit;
+  const values = [];
   let where = "status='published' AND access_level='public' AND published_at<=now()";
-  if (category && validCategories.includes(category)) { values.push(category); where += ` AND category=$${values.length}`; }
-  if (q) { values.push(`%${q}%`); where += ` AND (title ILIKE $${values.length} OR dek ILIKE $${values.length} OR body_text ILIKE $${values.length})`; }
+  if (category) { values.push(category); where += ` AND category=${values.length}`; }
+  if (q) { values.push(`%${q}%`); where += ` AND (title ILIKE ${values.length} OR dek ILIKE ${values.length} OR body_text ILIKE ${values.length})`; }
+  const count = await pool.query(`SELECT COUNT(*)::int AS total FROM articles WHERE ${where}`, values);
+  const total = count.rows[0]?.total || 0;
   const rows = await pool.query(
-    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC LIMIT $1`,
-    values
+    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC,id DESC LIMIT ${values.length + 1} OFFSET ${values.length + 2}`,
+    [...values, limit, offset]
   );
-  res.json({ articles: rows.rows });
+  res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+  res.json({ articles: rows.rows, pagination: { page, limit, total, totalPages: Math.ceil(total / limit), hasPrevious: page > 1, hasNext: offset + rows.rows.length < total } });
 }));
 
 app.get("/api/articles/:slug", asyncRoute(async (req, res) => {
