@@ -331,6 +331,7 @@ app.post("/api/newsroom/access-pins", requireAuth, allowRoles("publisher"), asyn
 app.post("/api/newsroom/access-pins/:id/revoke", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
   const r=await pool.query("UPDATE advanced_access_pins SET revoked_at=now() WHERE id=$1 AND revoked_at IS NULL RETURNING id",[req.params.id]);
   if(!r.rowCount) return res.status(404).json({error:"Active PIN not found."});
+  await pool.query("UPDATE advanced_access_sessions SET revoked_at=now() WHERE pin_id=$1 AND revoked_at IS NULL",[req.params.id]);
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'access_pin_revoked','access_pin',$2)",[req.user.id,req.params.id]);
   res.json({ok:true});
 }));
@@ -369,7 +370,7 @@ app.post("/api/access/activate", rateLimit({windowMs:15*60*1000,limit:10,standar
     await client.query("INSERT INTO access_activations(pin_id,user_email) VALUES($1,$2)",[p.id,email]);
     const accessToken=randomBytes(32).toString("base64url");
     const expiresAt=new Date(Date.now()+7*86400000);
-    await client.query("INSERT INTO advanced_access_sessions(token_hash,user_email,access_level,expires_at) VALUES($1,$2,$3,$4)",[tokenHash(accessToken),email,p.access_level,expiresAt]);
+    await client.query("INSERT INTO advanced_access_sessions(token_hash,user_email,access_level,expires_at,pin_id) VALUES($1,$2,$3,$4,$5)",[tokenHash(accessToken),email,p.access_level,expiresAt,p.id]);
     await client.query("COMMIT");
     res.json({ok:true,accessLevel:p.access_level,activatedAt:new Date().toISOString(),expiresAt,email,accessToken});
   }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
