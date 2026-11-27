@@ -1,8 +1,7 @@
-import NextLink from "next/link";
-import type { ComponentProps } from "react";
+import type { AnchorHTMLAttributes } from "react";
 import { siteBasePath } from "@/lib/base-path";
 
-type SiteLinkProps = ComponentProps<typeof NextLink>;
+type SiteLinkProps = AnchorHTMLAttributes<HTMLAnchorElement>;
 
 export default function SiteLink({ href, ...props }: SiteLinkProps) {
   const basePath = siteBasePath;
@@ -16,5 +15,5 @@ export default function SiteLink({ href, ...props }: SiteLinkProps) {
       ? basePath + href
       : href;
 
-  return <NextLink href={safeHref} {...props} />;
+  return <a href={safeHref} {...props} />;
 }
