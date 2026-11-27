@@ -55,8 +55,8 @@ export default function NewsroomDashboard(){
  async function createArticle(e:FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setError("");setNotice("");
   const slug=title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-  try{await newsroomRequest("/api/newsroom/articles",{method:"POST",body:JSON.stringify({title,slug,category,dek,bodyText:body,bodyJson:{text:body},seoTitle,seoDescription,featuredImageUrl,featuredImageAlt})});
-   setTitle("");setDek("");setBody("");setSeoTitle("");setSeoDescription("");setShowCreate(false);setNotice("Draft saved.");await refresh();
+  try{const payload=JSON.stringify({title,slug,category,dek,bodyText:body,bodyJson:{text:body},seoTitle,seoDescription,featuredImageUrl,featuredImageAlt});if(editingId) await newsroomRequest("/api/newsroom/articles/"+editingId,{method:"PATCH",body:payload});else await newsroomRequest("/api/newsroom/articles",{method:"POST",body:payload});
+   setTitle("");setDek("");setBody("");setSeoTitle("");setSeoDescription("");setFeaturedImageUrl("");setFeaturedImageAlt("");setEditingId(null);setShowCreate(false);setNotice(editingId?"Article changes saved.":"Draft saved.");await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Could not save article.");}finally{setBusy(false);}
  }
  async function editArticle(id:string){setError("");try{const r=await newsroomRequest<{article:any}>("/api/newsroom/articles/"+id);const a=r.article;setEditingId(id);setTitle(a.title||"");setCategory(a.category||"Politics");setDek(a.dek||"");setBody(a.body_text||"");setSeoTitle(a.seo_title||"");setSeoDescription(a.seo_description||"");setFeaturedImageUrl(a.featured_image_url||"");setFeaturedImageAlt(a.featured_image_alt||"");setShowCreate(true);setPanel("articles");window.scrollTo({top:0,behavior:"smooth"});}catch(e){setError(e instanceof Error?e.message:"Unable to load article for editing.");}}\n async function articleAction(id:string,action:"submit"|"review"|"request_changes"|"publish"){
