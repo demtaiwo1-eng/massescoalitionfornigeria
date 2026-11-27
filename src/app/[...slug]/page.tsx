@@ -27,8 +27,8 @@ export default async function ContentPage({ params }: { params: Promise<{ slug: 
   const current = category ? { title: category[0].toUpperCase() + category.slice(1), intro: `News, analysis and public-interest reporting on ${category}.`, body: "There are no published stories in this category yet. New articles will appear after editorial review." } : page!;
   return <main className="subpage"><div className="subpage-top"><div className="wrap"><Link href="/" className="back-link">← Back to homepage</Link><div className="eyebrow">MASSES COALITION OF NIGERIA</div><h1>{current.title}</h1><p>{current.intro}</p></div></div><div className="wrap subpage-content">
     {key === "search" && <SiteSearch/>}
-    {key === "latest" && <PublicArticles/>}
-    {category && <PublicArticles category={category[0].toUpperCase()+category.slice(1)}/>}
+    {key === "latest" && <PublicArticles limit={12} paginate/>}
+    {category && <PublicArticles category={category[0].toUpperCase()+category.slice(1)} limit={12} paginate/>}
     {key === "categories" && <div className="category-grid">{categories.map((c,i)=><Link className="category-card" key={c} href={`/category/${c}/`}><span className="category-number">0{i+1}</span><strong>{c[0].toUpperCase()+c.slice(1)}</strong><span>→</span></Link>)}</div>}
     {key !== "categories" && key !== "latest" && !category && key !== "search" && <article className="prose"><p>{current.body}</p></article>}
     {key === "search" && <article className="prose"><p>{current.body}</p></article>}
