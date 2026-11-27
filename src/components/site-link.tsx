@@ -1,10 +1,11 @@
 import NextLink from "next/link";
 import type { ComponentProps } from "react";
+import { siteBasePath } from "@/lib/base-path";
 
 type SiteLinkProps = ComponentProps<typeof NextLink>;
 
 export default function SiteLink({ href, ...props }: SiteLinkProps) {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const basePath = siteBasePath;
   const safeHref =
     typeof href === "string" &&
     href.startsWith("/") &&
