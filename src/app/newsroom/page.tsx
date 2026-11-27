@@ -66,7 +66,7 @@ export default function NewsroomDashboard(){
  async function articleAction(id:string,action:"submit"|"review"|"request_changes"|"publish"){
   setBusy(true);setError("");setNotice("");
   try{const body=action==="review"?{decision:"approved",notes:"Approved in newsroom dashboard."}:action==="request_changes"?{decision:"changes_requested",notes:"Please revise this draft in response to the editor’s notes."}:{};
-   await newsroomRequest("/api/newsroom/articles/"+id+"/"+action,{method:"POST",body:JSON.stringify(body)});
+   const endpoint=action==="request_changes"?"review":action;await newsroomRequest("/api/newsroom/articles/"+id+"/"+endpoint,{method:"POST",body:JSON.stringify(body)});
    setNotice(action==="submit"?"Article submitted for editorial review.":action==="review"?"Article approved.":action==="request_changes"?"Article returned for corrections.":"Article published.");await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Action failed.");}finally{setBusy(false);}
  }
