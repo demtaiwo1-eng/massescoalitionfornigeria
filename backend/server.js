@@ -168,6 +168,20 @@ app.get("/api/articles/:slug", asyncRoute(async (req, res) => {
   res.json({ article: result.rows[0] });
 }));
 
+app.get("/api/newsroom/articles/:id", requireAuth, asyncRoute(async (req,res) => {
+  const r=await pool.query("SELECT * FROM articles WHERE id=$1",[req.params.id]);
+  if(!r.rowCount) return res.status(404).json({error:"Article not found."});
+  const a=r.rows[0];
+  if(!["publisher","managing_editor","news_editor"].includes(req.user.role) && a.author_id!==req.user.id) return res.status(403).json({error:"You cannot view this article draft."});
+  res.json({article:a});
+}));
+app.get("/api/newsroom/articles/:id/revisions", requireAuth, asyncRoute(async (req,res) => {
+  const own=await pool.query("SELECT author_id FROM articles WHERE id=$1",[req.params.id]);
+  if(!own.rowCount) return res.status(404).json({error:"Article not found."});
+  if(!["publisher","managing_editor","news_editor"].includes(req.user.role) && own.rows[0].author_id!==req.user.id) return res.status(403).json({error:"You cannot view this article history."});
+  const r=await pool.query("SELECT r.id,r.created_at,u.full_name AS editor_name,r.snapshot->>'title' AS title FROM article_revisions r JOIN newsroom_users u ON u.id=r.editor_id WHERE r.article_id=$1 ORDER BY r.created_at DESC LIMIT 30",[req.params.id]);
+  res.json({revisions:r.rows});
+}));
 app.get("/api/newsroom/articles", requireAuth, asyncRoute(async (req, res) => {
   const result = await pool.query(
     "SELECT a.id,a.slug,a.title,a.category,a.status,a.updated_at,a.published_at,u.full_name AS author_name FROM articles a JOIN newsroom_users u ON u.id=a.author_id ORDER BY a.updated_at DESC LIMIT 100"
@@ -192,7 +206,7 @@ app.patch("/api/newsroom/articles/:id", requireAuth, asyncRoute(async (req, res)
   const current = found.rows[0];
   const privileged = ["publisher","managing_editor","news_editor"].includes(req.user.role);
   if (!privileged && current.author_id !== req.user.id) return res.status(403).json({ error: "You can only edit your own articles." });
-  if (["published","approved"].includes(current.status) && !privileged) return res.status(403).json({ error: "An editor must make changes to approved or published articles." });
+  if (!privileged && !["draft","changes_requested"].includes(current.status)) return res.status(403).json({ error: "Only drafts or articles returned for changes can be edited by their author." });
   const b = req.body || {};
   const next = {
     title: b.title ?? current.title, dek: b.dek ?? current.dek,
@@ -200,15 +214,16 @@ app.patch("/api/newsroom/articles/:id", requireAuth, asyncRoute(async (req, res)
     body_text: b.bodyText ?? current.body_text, category: b.category ?? current.category,
     featured_image_url: b.featuredImageUrl ?? current.featured_image_url,
     featured_image_alt: b.featuredImageAlt ?? current.featured_image_alt,
-    seo_title: b.seoTitle ?? current.seo_title, seo_description: b.seoDescription ?? current.seo_description
+    seo_title: b.seoTitle ?? current.seo_title, seo_description: b.seoDescription ?? current.seo_description,
+    access_level: b.accessLevel === "advanced" && ["publisher","managing_editor"].includes(req.user.role) ? "advanced" : current.access_level
   };
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query("INSERT INTO article_revisions(article_id,editor_id,snapshot) VALUES($1,$2,$3)",[current.id,req.user.id,JSON.stringify(current)]);
     const updated = await client.query(
-      "UPDATE articles SET title=$2,dek=$3,body_json=$4,body_text=$5,category=$6,featured_image_url=$7,featured_image_alt=$8,seo_title=$9,seo_description=$10,updated_at=now(),version=version+1 WHERE id=$1 RETURNING *",
-      [current.id,next.title,next.dek,JSON.stringify(next.body_json),next.body_text,next.category,next.featured_image_url,next.featured_image_alt,next.seo_title,next.seo_description]
+      "UPDATE articles SET title=$2,dek=$3,body_json=$4,body_text=$5,category=$6,featured_image_url=$7,featured_image_alt=$8,seo_title=$9,seo_description=$10,access_level=$11,updated_at=now(),version=version+1 WHERE id=$1 RETURNING *",
+      [current.id,next.title,next.dek,JSON.stringify(next.body_json),next.body_text,next.category,next.featured_image_url,next.featured_image_alt,next.seo_title,next.seo_description,next.access_level]
     );
     await client.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'article_updated','article',$2)",[req.user.id,current.id]);
     await client.query("COMMIT");
