@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/site-link";
 import { ArrowRight, Search, ShieldCheck, Newspaper, Radio } from "lucide-react";
 import MobileNavigation from "../components/mobile-navigation";
 import PublicArticles from "../components/public-articles";
