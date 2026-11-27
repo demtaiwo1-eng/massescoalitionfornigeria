@@ -4,8 +4,14 @@
   "private": true,
   "description": "Secure API for the Masses Coalition of Nigeria newsroom",
   "main": "server.js",
-  "scripts": { "start": "node server.js", "check": "node --check server.js" },
-  "engines": { "node": ">=20" },
+  "scripts": {
+    "prestart": "node --check server.js",
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
