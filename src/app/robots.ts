@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/newsroom/", "/api/"],
+      disallow: ["/massescoalitionfornigeria.github.io/newsroom/", "/massescoalitionfornigeria.github.io/api/"],
     },
     sitemap: `${base}/sitemap.xml`,
   };
