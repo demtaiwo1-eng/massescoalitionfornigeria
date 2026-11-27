@@ -29,7 +29,8 @@ export default function MobileNavigation() {
         <Link href="/search/" onClick={() => setOpen(false)}><Search size={16}/> Search</Link>
         <Link href="/about/" onClick={() => setOpen(false)}>About MCN</Link>
         <Link href="/contact/" onClick={() => setOpen(false)}>Contact newsroom</Link>
-        <Link href="/access/activate/" onClick={() => setOpen(false)}>Activate advanced access</Link>\n        <Link href="/newsroom/sign-in/" onClick={() => setOpen(false)}>Newsroom sign in</Link>
+        <Link href="/access/activate/" onClick={() => setOpen(false)}>Activate advanced access</Link>
+        <Link href="/newsroom/sign-in/" onClick={() => setOpen(false)}>Newsroom sign in</Link>
       </nav>
     </div>
   );
