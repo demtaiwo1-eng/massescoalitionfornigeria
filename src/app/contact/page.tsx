@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/site-link";
 import ContactForm from "../../components/contact-form";
 
 export const metadata={title:"Contact the Newsroom",description:"Send a news tip, correction or editorial enquiry to Masses Coalition of Nigeria."};
