@@ -29,10 +29,10 @@ export default function NewsroomSignIn() {
       } else if (mode === "recovery") {
         await newsroomRequest("/api/auth/publisher-recovery",{method:"POST",body:JSON.stringify({email,recoveryKey,newPassword:password})});
         setMode("login"); setPassword(""); setRecoveryKey("");
-        setMessage("Publisher password updated. Sign in using your new password.");
+        setMessage("Administrator password updated. Sign in using your new password.");
       } else if (mode === "setup") {
         await newsroomRequest("/api/setup/first-admin",{method:"POST",headers:{"x-mcn-setup-token":setupToken},body:JSON.stringify({email,fullName,password})});
-        setMode("login"); setSetupAvailable(false); setMessage("Publisher account created. Sign in with the email and password you just registered.");
+        setMode("login"); setSetupAvailable(false); setMessage("Administrator account created. Sign in with the email and password you just registered.");
       } else {
         await newsroomRequest("/api/auth/login",{method:"POST",body:JSON.stringify({email,password})});
         router.push("/newsroom/");
@@ -52,7 +52,7 @@ export default function NewsroomSignIn() {
       <label>Password<input required type="password" minLength={mode==="setup"||mode==="recovery"||mode==="register"?14:1} autoComplete={mode==="setup"||mode==="recovery"||mode==="register"?"new-password":"current-password"} value={password} onChange={e=>setPassword(e.target.value)} />{(mode==="setup"||mode==="recovery"||mode==="register") && <small>Use at least 14 characters.</small>}</label>
       {mode === "register" && <label>Requested role<select value={role} onChange={e=>setRole(e.target.value)}><option value="reporter">Reporter</option><option value="contributor">Contributor</option><option value="news_editor">News Editor</option><option value="managing_editor">Managing Editor</option></select></label>}
       {mode === "setup" && <label>One-time setup key<input required type="password" autoComplete="off" value={setupToken} onChange={e=>setSetupToken(e.target.value)} /></label>}
-      {mode === "recovery" && <label>One-time Publisher recovery key<input required type="password" autoComplete="off" value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} /></label>}
+      {mode === "recovery" && <label>One-time Administrator recovery key<input required type="password" autoComplete="off" value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} /></label>}
       <button className="primary-button" type="submit" disabled={busy}>{busy ? "Please wait…" : mode==="setup" ? "Create Administrator account" : mode==="register" ? "Submit registration" : mode==="recovery" ? "Update Administrator password" : "Sign in securely"}</button>
     </form>
     {message && <p role="status" className="notice">{message}</p>}
