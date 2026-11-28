@@ -29,6 +29,26 @@ export default function HomePage() {
         <div className="section-heading"><div><div className="eyebrow">LATEST NEWS & DEVELOPMENTS</div><h1>Explore <em>News.</em></h1></div><span className="explore-news-count">{newsStories.length} stories</span></div>
         <div className="explore-news-intro"><p>Browse the latest stories across politics, the economy, security, society and more. Each item includes a short summary, publication date, category and a link to its original report.</p></div>
         <div className="home-source-disclaimer"><ShieldCheck size={18}/><p><strong>Editorial note:</strong> These collected reports are presented for discovery and further reading. MCN newsroom publication is separate and requires independent editorial review, verification and approval.</p></div>
+        <div className="mcn-frontpage-bar"><span className="mcn-frontpage-live"><i/> NEWSROOM LIVE</span><span>Independent coverage from across Nigeria</span><span className="mcn-frontpage-date">{new Date().toLocaleDateString("en-NG", {weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"Africa/Lagos"})}</span></div>
+        {newsStories[0] && <div className="mcn-frontpage-lead-grid">
+          <article className="mcn-frontpage-lead">
+            <a className="mcn-frontpage-lead-image" href={newsStories[0].url} target="_blank" rel="noopener noreferrer"><img src={newsStories[0].imageUrl} alt={newsStories[0].title}/><span>TOP STORY</span></a>
+            <div className="mcn-story-meta"><span>{newsStories[0].category}</span><time>{new Date(newsStories[0].publishedAt).toLocaleDateString("en-NG",{day:"numeric",month:"short",year:"numeric",timeZone:"Africa/Lagos"})}</time></div>
+            <h2><a href={newsStories[0].url} target="_blank" rel="noopener noreferrer">{newsStories[0].title}</a></h2>
+            <p>{newsStories[0].summary}</p>
+            <a className="mcn-read-link" href={newsStories[0].url} target="_blank" rel="noopener noreferrer">Read full report <ArrowUpRight size={15}/></a>
+          </article>
+          <aside className="mcn-frontpage-briefing">
+            <div className="mcn-frontpage-briefing-head"><strong>MORE HEADLINES</strong><Link href="/latest/">MCN newsroom <ArrowRight size={14}/></Link></div>
+            {newsStories.slice(1,6).map((story,index)=><article className="mcn-frontpage-brief-item" key={story.url}>
+              <span className="mcn-frontpage-brief-number">{String(index+1).padStart(2,"0")}</span>
+              <div><div className="mcn-story-meta"><span>{story.category}</span><time>{new Date(story.publishedAt).toLocaleDateString("en-NG",{day:"numeric",month:"short",timeZone:"Africa/Lagos"})}</time></div><h3><a href={story.url} target="_blank" rel="noopener noreferrer">{story.title}</a></h3></div>
+            </article>)}
+          </aside>
+        </div>}
+        <div className="mcn-frontpage-ticker"><strong><i/> DEVELOPING</strong><div>{newsStories.slice(0,8).map((story)=><a key={story.url} href={story.url} target="_blank" rel="noopener noreferrer">{story.title}</a>)}</div><Link href="/source-desk/">All updates <ArrowRight size={14}/></Link></div>
+        <nav className="mcn-frontpage-topics" aria-label="Browse news categories"><strong>IN THIS EDITION</strong>{sections.map((section)=><Link key={section} href={`/category/${section.toLowerCase()}/`}>{section} <ArrowUpRight size={12}/></Link>)}<Link href="/search/">Search all <Search size={12}/></Link></nav>
+        <div className="mcn-frontpage-grid-heading"><div><span className="eyebrow">THE NEWS AGENDA</span><h2>All the latest <em>headlines.</em></h2></div><span>{newsStories.length} REPORTS · UPDATED DAILY</span></div>
         <div className="explore-news-grid">
           {newsStories.map((story, index) => <article className="explore-news-card" key={story.url}>
             {story.imageUrl && <a className="explore-news-image" href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`Open original report: ${story.title}`}><img src={story.imageUrl} alt={story.title} loading={index < 6 ? "eager" : "lazy"} decoding="async"/></a>}
