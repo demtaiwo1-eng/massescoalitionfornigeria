@@ -167,7 +167,7 @@ app.get("/api/articles", asyncRoute(async (req, res) => {
 
 app.get("/api/articles/:slug", asyncRoute(async (req, res) => {
   const result = await pool.query(
-    "SELECT id,slug,title,dek,body_json,body_text,category,featured_image_url,featured_image_alt,published_at,seo_title,seo_description FROM articles WHERE slug=$1 AND status='published' AND access_level='public' AND published_at<=now()",
+    "SELECT id,slug,title,dek,body_json - 'reporting' AS body_json,body_text,category,featured_image_url,featured_image_alt,published_at,seo_title,seo_description FROM articles WHERE slug=$1 AND status='published' AND access_level='public' AND published_at<=now()",
     [req.params.slug]
   );
   if (!result.rowCount) return res.status(404).json({ error: "Article not found." });
