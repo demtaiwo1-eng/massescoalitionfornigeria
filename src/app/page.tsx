@@ -1,9 +1,14 @@
 import Link from "@/components/site-link";
-import { ArrowRight, Search, ShieldCheck, Newspaper, Radio } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Search, ShieldCheck, Newspaper, Radio } from "lucide-react";
 import MobileNavigation from "../components/mobile-navigation";
 import PublicArticles from "../components/public-articles";
+import { ibConnectBriefs } from "@/data/ibconnect-briefs";
 
 const sections = ["Politics", "Economy", "Security", "Education", "Health", "Society"];
+const featuredBriefs = ibConnectBriefs.slice(0, 6);
+const flagTone = (flag: string) => flag.startsWith("Allegations")
+  ? "source-flag source-flag-alert"
+  : flag === "Campaign material" ? "source-flag source-flag-campaign" : "source-flag";
 
 export default function HomePage() {
   return (
@@ -14,6 +19,7 @@ export default function HomePage() {
           <span className="brand-mark">MCN</span><span><strong>MASSES COALITION</strong><small>OF NIGERIA</small></span>
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
+          <Link href="/latest/">Latest</Link>
           {sections.map((section) => <Link key={section} href={`/category/${section.toLowerCase()}/`}>{section}</Link>)}
         </nav>
         <div className="header-actions"><Link className="icon-link" href="/search/" aria-label="Search"><Search size={19}/></Link><Link className="text-button source-desk-header-link" href="/source-desk/">Source desk</Link><Link className="staff-link" href="/newsroom/sign-in/">Newsroom <ArrowRight size={15}/></Link><MobileNavigation/></div>
@@ -32,8 +38,24 @@ export default function HomePage() {
           <span className="art-caption">A platform for the stories that shape us.</span>
         </div>
       </section>
-      <section className="ticker"><div className="wrap ticker-inner"><span className="ticker-label"><Radio size={15}/> NEWS DESK</span><span>We are building an independent home for verified Nigerian stories.</span><Link href="/source-desk/">Explore 35 external-source briefs <ArrowRight size={14}/></Link></div></section>
-      <section className="wrap section-block"><div className="section-heading"><div><div className="eyebrow">LATEST FROM THE NEWSROOM</div><h2>Reporting that <em>matters.</em></h2></div><Link href="/latest/" className="text-button">All latest stories <ArrowRight size={16}/></Link></div><PublicArticles limit={3}/></section>
+      <section className="ticker"><div className="wrap ticker-inner"><span className="ticker-label"><Radio size={15}/> NEWS DESK</span><span>{ibConnectBriefs.length} recent external-source briefs are available to read and verify.</span><Link href="/source-desk/">Open the source desk <ArrowRight size={14}/></Link></div></section>
+
+      <section className="wrap section-block home-source-section">
+        <div className="section-heading"><div><div className="eyebrow">NEWS AND DEVELOPMENTS</div><h2>Latest stories to <em>follow.</em></h2></div><Link href="/source-desk/" className="text-button">View all {ibConnectBriefs.length} briefs <ArrowRight size={16}/></Link></div>
+        <div className="home-source-disclaimer"><ShieldCheck size={18}/><p><strong>Source transparency:</strong> These are attributed summaries of third-party IB Connect posts, not original MCN reporting. Claims, campaign material and allegations are labelled and require independent editorial verification before MCN publication.</p></div>
+        <div className="home-source-grid">
+          {featuredBriefs.map((story, index) => <article className="home-source-card" key={story.url}>
+            <div className="home-source-meta"><span>{story.category}</span><time dateTime={story.publishedAt}>{new Date(story.publishedAt).toLocaleDateString("en-NG", {day:"numeric",month:"short",year:"numeric",timeZone:"Africa/Lagos"})}</time></div>
+            <span className={flagTone(story.flag)}>{story.flag}</span>
+            <h3>{story.title}</h3>
+            <p>{story.summary}</p>
+            <a className="home-source-link" href={story.url} target="_blank" rel="noopener noreferrer">Read original report <ArrowUpRight size={15}/></a>
+          </article>)}
+        </div>
+        <div className="home-source-bottom"><span>Showing {featuredBriefs.length} of {ibConnectBriefs.length} monitored source briefs</span><Link className="primary-button" href="/source-desk/">Explore all source briefs <ArrowRight size={16}/></Link></div>
+      </section>
+
+      <section className="wrap section-block home-published-section"><div className="section-heading"><div><div className="eyebrow">ORIGINAL MCN REPORTING</div><h2>Published by <em>our newsroom.</em></h2></div><Link href="/latest/" className="text-button">All published stories <ArrowRight size={16}/></Link></div><PublicArticles limit={3}/></section>
       <section className="wrap section-block">
         <div className="section-heading"><div><div className="eyebrow">EXPLORE OUR COVERAGE</div><h2>Stories across <em>every sector.</em></h2></div><Link href="/categories/" className="text-button">All categories <ArrowRight size={16}/></Link></div>
         <div className="category-grid">{sections.map((s, i) => <Link className="category-card" key={s} href={`/category/${s.toLowerCase()}/`}><span className="category-number">0{i+1}</span><strong>{s}</strong><ArrowRight size={17}/></Link>)}</div>
