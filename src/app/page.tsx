@@ -45,6 +45,7 @@ export default function HomePage() {
         <div className="home-source-disclaimer"><ShieldCheck size={18}/><p><strong>Source transparency:</strong> These are attributed summaries of third-party IB Connect posts, not original MCN reporting. Claims, campaign material and allegations are labelled and require independent editorial verification before MCN publication.</p></div>
         <div className="home-source-grid">
           {featuredBriefs.map((story, index) => <article className="home-source-card" key={story.url}>
+            {story.imageUrl && <a className="source-story-image home-source-image" href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`View original image for ${story.title}`}><img src={story.imageUrl} alt={story.title} loading="lazy" decoding="async" /></a>}
             <div className="home-source-meta"><span>{story.category}</span><time dateTime={story.publishedAt}>{new Date(story.publishedAt).toLocaleDateString("en-NG", {day:"numeric",month:"short",year:"numeric",timeZone:"Africa/Lagos"})}</time></div>
             <span className={flagTone(story.flag)}>{story.flag}</span>
             <h3>{story.title}</h3>
