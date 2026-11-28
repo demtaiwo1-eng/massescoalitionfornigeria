@@ -239,9 +239,14 @@ app.patch("/api/newsroom/articles/:id", requireAuth, asyncRoute(async (req, res)
   } catch(e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
 }));
 app.post("/api/newsroom/articles/:id/submit", requireAuth, asyncRoute(async (req,res) => {
+  const draft = await pool.query("SELECT body_json FROM articles WHERE id=$1 AND author_id=$2 AND status IN ('draft','changes_requested')",[req.params.id,req.user.id]);
+  if (!draft.rowCount) return res.status(409).json({error:"Article cannot be submitted in its current state."});
+  const sources = String(draft.rows[0].body_json?.reporting?.sources || "").trim();
+  if (sources.length < 20) return res.status(400).json({error:"Add source names, working links or clear verification notes (at least 20 characters) before submitting this report."});
   const r = await pool.query("UPDATE articles SET status='submitted',updated_at=now() WHERE id=$1 AND author_id=$2 AND status IN ('draft','changes_requested') RETURNING id",[req.params.id,req.user.id]);
-  if (!r.rowCount) return res.status(409).json({error:"Article cannot be submitted in its current state."});
+  if (!r.rowCount) return res.status(409).json({error:"This report changed while you were submitting it. Refresh the newsroom and try again."});
   await pool.query("INSERT INTO editorial_reviews(article_id,reviewer_id,decision,notes) VALUES($1,$2,'submitted',$3)",[req.params.id,req.user.id,req.body?.notes||null]);
+  await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'article_submitted','article',$2,$3)",[req.user.id,req.params.id,JSON.stringify({sourceNotesLength:sources.length})]);
   res.json({ok:true,status:"submitted"});
 }));
 app.post("/api/newsroom/articles/:id/review", requireAuth, allowRoles("publisher","managing_editor","news_editor"), asyncRoute(async (req,res) => {
