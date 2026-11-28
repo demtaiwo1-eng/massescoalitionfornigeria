@@ -2,7 +2,7 @@ export type SourceBrief = {
   title: string;
   publishedAt: string;
   url: string;
-  category: "Politics" | "Economy" | "Security" | "World" | "Culture";
+  category: "Politics" | "Economy" | "Security" | "World" | "Culture" | "Society";
   flag: "Opinion / commentary" | "Campaign material" | "Allegations — verify" | "News item — verify";
   summary: string;
 };
