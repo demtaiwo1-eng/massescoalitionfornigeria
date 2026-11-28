@@ -102,10 +102,29 @@ app.post("/api/setup/first-admin", asyncRoute(async (req, res) => {
   } finally { client.release(); }
 }));
 
+const registrationLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
+app.post("/api/auth/register", registrationLimiter, asyncRoute(async (req,res) => {
+  const fullName=String(req.body?.fullName||"").trim();
+  const email=String(req.body?.email||"").trim().toLowerCase();
+  const password=req.body?.password;
+  const role=String(req.body?.role||"");
+  if(fullName.length<2 || fullName.length>120 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || typeof password!=="string" || password.length<14 || password.length>200 || !["managing_editor","news_editor","reporter","contributor"].includes(role)) return res.status(400).json({error:"Enter your name, a valid email, a password of at least 14 characters and choose an available newsroom role."});
+  const hash=await bcrypt.hash(password,12);
+  const client=await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const admin=await client.query("SELECT 1 FROM newsroom_users WHERE role='publisher' AND is_active=true LIMIT 1");
+    if(!admin.rowCount) { await client.query("ROLLBACK"); return res.status(503).json({error:"The Administrator has not completed first-time setup yet. Please try again later."}); }
+    const created=await client.query("INSERT INTO newsroom_users(email,full_name,password_hash,role,is_active,registration_status) VALUES($1,$2,$3,$4,false,'pending') RETURNING id,email,full_name,role,registration_status",[email,fullName,hash,role]);
+    await client.query("INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('registration_submitted','user',$1,$2)",[created.rows[0].id,JSON.stringify({email,role})]);
+    await client.query("COMMIT");
+    res.status(201).json({ok:true,status:"pending",message:"Registration received. The Administrator must approve your account before you can sign in."});
+  } catch(error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
+}));
 app.post("/api/auth/login", asyncRoute(async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required." });
-  const result = await pool.query("SELECT * FROM newsroom_users WHERE email=$1 AND is_active=true", [String(email).trim().toLowerCase()]);
+  const result = await pool.query("SELECT * FROM newsroom_users WHERE email=$1 AND is_active=true AND registration_status='approved'", [String(email).trim().toLowerCase()]);
   const user = result.rows[0];
   if (!user || !(await bcrypt.compare(String(password), user.password_hash))) {
     return res.status(401).json({ error: "Invalid email or password." });
@@ -350,7 +369,7 @@ app.patch("/api/newsroom/messages/:id", requireAuth, allowRoles("publisher","man
 }));
 
 app.get("/api/newsroom/users", requireAuth, allowRoles("publisher"), asyncRoute(async (_req,res) => {
-  const r = await pool.query("SELECT id,email,full_name,role,is_active,created_at,last_login_at FROM newsroom_users ORDER BY created_at ASC");
+  const r = await pool.query("SELECT id,email,full_name,role,is_active,registration_status,created_at,last_login_at FROM newsroom_users ORDER BY CASE registration_status WHEN 'pending' THEN 0 ELSE 1 END,created_at ASC");
   res.json({users:r.rows});
 }));
 app.post("/api/newsroom/users", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
@@ -365,9 +384,11 @@ app.post("/api/newsroom/users", requireAuth, allowRoles("publisher"), asyncRoute
 }));
 app.patch("/api/newsroom/users/:id", requireAuth, allowRoles("publisher"), asyncRoute(async (req,res) => {
   if (req.params.id===req.user.id) return res.status(400).json({error:"You cannot change your own role or access here."});
-  const {role,isActive} = req.body || {};
-  if (role!==undefined && (!validRoles.includes(role) || role==="publisher")) return res.status(400).json({error:"Publisher is reserved for the first owner account. Choose another newsroom role."});
-  const r = await pool.query("UPDATE newsroom_users SET role=COALESCE($2,role),is_active=COALESCE($3,is_active),updated_at=now() WHERE id=$1 RETURNING id,email,full_name,role,is_active",[req.params.id,role??null,isActive??null]);
+  const {role,isActive,registrationStatus} = req.body || {};
+  if (role!==undefined && (!validRoles.includes(role) || role==="publisher")) return res.status(400).json({error:"Administrator access is reserved for the first owner account."});
+  if (registrationStatus!==undefined && !["approved","rejected","pending"].includes(registrationStatus)) return res.status(400).json({error:"Invalid registration status."});
+  const nextActive=registrationStatus==="approved"?true:registrationStatus==="rejected"?false:isActive??null;
+  const r = await pool.query("UPDATE newsroom_users SET role=COALESCE($2,role),is_active=COALESCE($3,is_active),registration_status=COALESCE($4,registration_status),updated_at=now() WHERE id=$1 AND role<>'publisher' RETURNING id,email,full_name,role,is_active,registration_status",[req.params.id,role??null,nextActive,registrationStatus??null]);
   if (!r.rowCount) return res.status(404).json({error:"Staff account not found."});
   await pool.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id) VALUES($1,'staff_account_updated','user',$2)",[req.user.id,req.params.id]);
   res.json({user:r.rows[0]});
@@ -456,4 +477,6 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({error:"An unexpected server error occurred."});
 });
 cron.schedule("* * * * *", async () => { try { await pool.query("UPDATE articles SET status='published',published_at=scheduled_at,updated_at=now() WHERE status='scheduled' AND scheduled_at<=now()"); } catch(e) { console.error("Scheduled publication failed:",e.message); } });
-app.listen(PORT, () => console.log(`MCN newsroom API listening on ${PORT}`));
+pool.query("ALTER TABLE newsroom_users ADD COLUMN IF NOT EXISTS registration_status TEXT NOT NULL DEFAULT 'approved'")
+  .then(() => app.listen(PORT, () => console.log(`MCN newsroom API listening on ${PORT}`)))
+  .catch(error => { console.error("MCN database migration failed:", error.message); process.exit(1); });
