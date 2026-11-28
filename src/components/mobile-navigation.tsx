@@ -23,7 +23,7 @@ export default function MobileNavigation() {
       {open && <div className="mobile-menu-backdrop" onClick={() => setOpen(false)} />}
       <nav id="mobile-site-menu" className={open ? "mobile-menu is-open" : "mobile-menu"} aria-label="Mobile navigation" aria-hidden={!open}>
         <div className="mobile-menu-heading"><strong>Explore MCN</strong><button type="button" aria-label="Close menu" onClick={() => setOpen(false)}><X size={19}/></button></div>
-        <Link href="/latest/" onClick={() => setOpen(false)}>Latest stories <ArrowRight size={16}/></Link>\n        <Link href="/source-desk/" onClick={() => setOpen(false)}>Source desk <ArrowRight size={16}/></Link>
+        <Link href="/latest/" onClick={() => setOpen(false)}>Latest stories <ArrowRight size={16}/></Link>\n        <Link href="/source-desk/" onClick={() => setOpen(false)}>Explore News <ArrowRight size={16}/></Link>
         {links.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)}>{label}<ArrowRight size={16}/></Link>)}
         <Link href="/categories/" onClick={() => setOpen(false)}>All categories <ArrowRight size={16}/></Link>
         <Link href="/search/" onClick={() => setOpen(false)}><Search size={16}/> Search</Link>
