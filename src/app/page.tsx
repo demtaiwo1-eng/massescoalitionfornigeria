@@ -1,11 +1,10 @@
 import Link from "@/components/site-link";
-import { ArrowRight, ArrowUpRight, Search, ShieldCheck, Newspaper, Radio } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Search, ShieldCheck, Newspaper } from "lucide-react";
 import MobileNavigation from "../components/mobile-navigation";
 import PublicArticles from "../components/public-articles";
 import { ibConnectBriefs } from "@/data/ibconnect-briefs";
 
 const sections = ["Politics", "Economy", "Security", "Education", "Health", "Society"];
-const featuredBriefs = ibConnectBriefs.slice(0, 6);
 const flagTone = (flag: string) => flag.startsWith("Allegations")
   ? "source-flag source-flag-alert"
   : flag === "Campaign material" ? "source-flag source-flag-campaign" : "source-flag";
