@@ -351,3 +351,12 @@ body { color-scheme:inherit; }
 .home-published-section{padding-top:54px;border-top:1px solid var(--line)}
 @media(max-width:1000px){.home-source-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.desktop-nav{gap:14px}.desktop-nav a{font-size:11px}}
 @media(max-width:640px){.home-source-section{padding-top:42px;padding-bottom:48px}.home-source-grid{grid-template-columns:1fr}.home-source-card{padding:18px}.home-source-bottom{align-items:stretch;flex-direction:column}.home-source-bottom .primary-button{justify-content:center}.home-source-disclaimer{padding:13px}.home-published-section{padding-top:40px}}
+
+
+/* Featured images sourced from the original IB Connect articles */
+.source-story-image{display:block;overflow:hidden;background:#e8ece8;border-radius:4px;margin:-2px -2px 16px;aspect-ratio:16/9}
+.source-story-image img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}
+.source-story-image:hover img{transform:scale(1.025)}
+.home-source-image{margin:-20px -20px 16px;aspect-ratio:16/9}
+.source-desk-image{margin:-22px -22px 18px;aspect-ratio:16/9}
+@media(max-width:640px){.home-source-image{margin:-18px -18px 15px}.source-desk-image{margin:-18px -18px 15px}}
