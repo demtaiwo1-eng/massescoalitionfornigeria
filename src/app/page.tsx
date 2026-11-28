@@ -2,7 +2,7 @@ import Link from "@/components/site-link";
 import { ArrowRight, ArrowUpRight, Search, ShieldCheck, Newspaper } from "lucide-react";
 import MobileNavigation from "../components/mobile-navigation";
 import PublicArticles from "../components/public-articles";
-import { ibConnectBriefs } from "@/data/ibconnect-briefs";
+import { newsStories } from "@/data/news-stories";
 
 const sections = ["Politics", "Economy", "Security", "Education", "Health", "Society"];
 const flagTone = (flag: string) => flag.startsWith("Allegations")
@@ -10,10 +10,7 @@ const flagTone = (flag: string) => flag.startsWith("Allegations")
   : flag === "Campaign material" ? "source-flag source-flag-campaign" : "source-flag";
 
 export default function HomePage() {
-  const leadStory = featuredBriefs[0];
-  const supportingStories = featuredBriefs.slice(1, 4);
-  const moreStories = featuredBriefs.slice(4, 7);
-
+  
   return (
     <main className="mcn-home">
       <div className="topline"><div className="wrap topline-inner"><span>Independent journalism. Public interest first.</span><span>Nigeria · English</span></div></div>
@@ -29,11 +26,11 @@ export default function HomePage() {
       </header>
 
       <section className="wrap section-block explore-news-section" id="explore-news">
-        <div className="section-heading"><div><div className="eyebrow">LATEST NEWS & DEVELOPMENTS</div><h1>Explore <em>News.</em></h1></div><span className="explore-news-count">{ibConnectBriefs.length} stories</span></div>
+        <div className="section-heading"><div><div className="eyebrow">LATEST NEWS & DEVELOPMENTS</div><h1>Explore <em>News.</em></h1></div><span className="explore-news-count">{newsStories.length} stories</span></div>
         <div className="explore-news-intro"><p>Browse the latest stories across politics, the economy, security, society and more. Each item includes a short summary, publication date, category and a link to its original report.</p></div>
         <div className="home-source-disclaimer"><ShieldCheck size={18}/><p><strong>Editorial note:</strong> These collected reports are presented for discovery and further reading. MCN newsroom publication is separate and requires independent editorial review, verification and approval.</p></div>
         <div className="explore-news-grid">
-          {ibConnectBriefs.map((story, index) => <article className="explore-news-card" key={story.url}>
+          {newsStories.map((story, index) => <article className="explore-news-card" key={story.url}>
             {story.imageUrl && <a className="explore-news-image" href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`Open original report: ${story.title}`}><img src={story.imageUrl} alt={story.title} loading={index < 6 ? "eager" : "lazy"} decoding="async"/></a>}
             <div className="mcn-story-meta"><span>{story.category}</span><time dateTime={story.publishedAt}>{new Date(story.publishedAt).toLocaleDateString("en-NG", {day:"numeric",month:"short",year:"numeric",timeZone:"Africa/Lagos"})}</time></div>
             <h2><a href={story.url} target="_blank" rel="noopener noreferrer">{story.title}</a></h2>
