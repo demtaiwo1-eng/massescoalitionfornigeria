@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "@/components/site-link";
-import { ibConnectBriefs } from "@/data/ibconnect-briefs";
+import { newsStories } from "@/data/news-stories";
 import { ArrowUpRight, ShieldAlert, Newspaper } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -26,12 +26,12 @@ export default function SourceDeskPage() {
         <ShieldAlert size={22}/>
         <div><strong>Editorial transparency</strong><p>These collected reports are provided for discovery and further reading. They are not automatically presented as original MCN journalism. Claims, opinion, campaign material and allegations require independent verification, balance and editorial approval before publication by MCN.</p></div>
       </div>
-      <div className="source-desk-meta"><span><strong>{ibConnectBriefs.length}</strong> available stories</span><span>17–27 November 2026</span><span>Original article links included</span></div>
+      <div className="source-desk-meta"><span><strong>{newsStories.length}</strong> available stories</span><span>17–27 November 2026</span><span>Original article links included</span></div>
     </section>
     <section className="wrap source-desk-list">
       <div className="source-desk-section-heading"><div><div className="eyebrow">LATEST FIRST</div><h2>Stories to <em>explore</em></h2></div><Link href="/#explore-news">Back to homepage <ArrowUpRight size={15}/></Link></div>
       <div className="source-brief-grid">
-        {ibConnectBriefs.map((story, index) => <article className="source-brief-card" key={story.url}>
+        {newsStories.map((story, index) => <article className="source-brief-card" key={story.url}>
           {story.imageUrl && <a className="source-story-image source-desk-image" href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`Open original report: ${story.title}`}><img src={story.imageUrl} alt={story.title} loading="lazy" decoding="async" /></a>}
           <div className="source-brief-top"><span className="source-brief-index">{String(index+1).padStart(2,"0")}</span><time dateTime={story.publishedAt}>{new Date(story.publishedAt).toLocaleDateString("en-NG",{day:"numeric",month:"short",year:"numeric",timeZone:"Africa/Lagos"})}</time></div>
           <div className="source-brief-tags"><span className="source-category">{story.category}</span><span className={flagTone(story.flag)}>{story.flag}</span></div>
