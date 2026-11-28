@@ -121,6 +121,54 @@ app.post("/api/auth/login", asyncRoute(async (req, res) => {
   res.cookie("mcn_session", rawToken, cookieOptions).json({ ok: true, user: publicUser(user), token: rawToken });
 }));
 
+
+const publisherRecoveryLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
+app.post("/api/auth/publisher-recovery", publisherRecoveryLimiter, asyncRoute(async (req, res) => {
+  const expectedToken = process.env.MCN_PUBLISHER_RECOVERY_TOKEN;
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const recoveryKey = String(req.body?.recoveryKey || "");
+  const newPassword = req.body?.newPassword;
+  if (!expectedToken || expectedToken.length < 40 || !safeEqual(recoveryKey, expectedToken)) {
+    return res.status(403).json({ error: "Publisher recovery could not be verified." });
+  }
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || typeof newPassword !== "string" || newPassword.length < 14 || newPassword.length > 200) {
+    return res.status(400).json({ error: "Enter the Publisher email and a new password of at least 14 characters." });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(734921106)");
+    const used = await client.query("SELECT value FROM system_settings WHERE key='publisher_recovery_used' LIMIT 1");
+    if (used.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "The one-time Publisher recovery has already been used. Contact the system administrator." });
+    }
+    const account = await client.query(
+      "SELECT id,email FROM newsroom_users WHERE email=$1 AND role='publisher' AND is_active=true FOR UPDATE",
+      [email]
+    );
+    if (!account.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Publisher recovery could not be completed for this account." });
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await client.query("UPDATE newsroom_users SET password_hash=$2,updated_at=now() WHERE id=$1", [account.rows[0].id, passwordHash]);
+    await client.query("UPDATE newsroom_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL", [account.rows[0].id]);
+    await client.query("INSERT INTO system_settings(key,value) VALUES('publisher_recovery_used',now()::text) ON CONFLICT (key) DO NOTHING");
+    await client.query(
+      "INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'publisher_password_recovered','user',$1,$2)",
+      [account.rows[0].id, JSON.stringify({ email, sessionsRevoked: true })]
+    );
+    await client.query("COMMIT");
+    res.json({ ok: true, message: "Publisher password updated. All existing newsroom sessions were signed out. Sign in with your new password." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}));
+
 const requireAuth = asyncRoute(async (req, res, next) => {
   const bearer = req.get("authorization") || "";
   const token = req.cookies.mcn_session || (bearer.startsWith("Bearer ") ? bearer.slice(7) : null);
