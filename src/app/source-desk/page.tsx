@@ -32,6 +32,7 @@ export default function SourceDeskPage() {
       <div className="source-desk-section-heading"><div><div className="eyebrow">LATEST FIRST</div><h2>Recent posts from <em>IB Connect</em></h2></div><a href="https://ibconnectng.blogspot.com/" target="_blank" rel="noopener noreferrer">Visit original site <ArrowUpRight size={15}/></a></div>
       <div className="source-brief-grid">
         {ibConnectBriefs.map((story, index) => <article className="source-brief-card" key={story.url}>
+          {story.imageUrl && <a className="source-story-image source-desk-image" href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`View original image for ${story.title}`}><img src={story.imageUrl} alt={story.title} loading="lazy" decoding="async" /></a>}
           <div className="source-brief-top"><span className="source-brief-index">{String(index+1).padStart(2,"0")}</span><time dateTime={story.publishedAt}>{new Date(story.publishedAt).toLocaleString("en-NG",{day:"numeric",month:"short",year:"numeric",timeZone:"Africa/Lagos"})}</time></div>
           <div className="source-brief-tags"><span className="source-category">{story.category}</span><span className={flagTone(story.flag)}>{story.flag}</span></div>
           <h3>{story.title}</h3>
