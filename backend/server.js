@@ -58,7 +58,7 @@ const publicUser = u => ({ id: u.id, email: u.email, fullName: u.full_name, role
 
 app.get("/health", asyncRoute(async (_req, res) => {
   await pool.query("SELECT 1");
-  res.json({ ok: true, service: "mcn-newsroom-api", database: "connected" });
+  res.json({ ok: true, service: "mcn-newsroom-api", database: "connected", reporterMetadataPrivate: true });
 }));
 
 app.get("/api/setup/status", asyncRoute(async (_req,res) => {
