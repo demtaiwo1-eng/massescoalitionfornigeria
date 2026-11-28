@@ -327,3 +327,6 @@ body { color-scheme:inherit; }
 .source-desk-header-link{white-space:nowrap}
 @media(max-width:1000px){.source-brief-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.source-desk-header-link{display:none}}
 @media(max-width:640px){.source-desk-hero{padding:46px 0 28px}.source-desk-nav{gap:12px;font-size:11px}.source-brief-grid{grid-template-columns:1fr}.source-desk-section-heading,.source-desk-footer-inner{align-items:flex-start;flex-direction:column}.source-desk-footer-inner .primary-button{width:100%;justify-content:center}.source-desk-bottom .wrap{flex-direction:column}.source-desk-notice{padding:16px}.source-desk-meta{gap:10px 18px}}
+
+.review-notes-field{display:grid;gap:8px;max-width:760px;margin:14px 0 20px;font-size:12px;font-weight:700;color:var(--green)}
+.review-notes-field textarea{width:100%;padding:12px;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-weight:400;line-height:1.6;resize:vertical}
