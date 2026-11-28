@@ -7,7 +7,7 @@ const categories = ["politics", "economy", "security", "education", "health", "s
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.SITE_URL || "https://www.massescoalitionfornigeria.com";
-  const pages = ["", "/about", "/editorial-policy", "/corrections", "/privacy", "/terms", "/contact", "/latest", "/categories", "/search", "/access/activate", ...categories.map(c => `/category/${c}`)];
+  const pages = ["", "/about", "/editorial-policy", "/corrections", "/privacy", "/terms", "/contact", "/latest", "/categories", "/search", "/source-desk", "/access/activate", ...categories.map(c => `/category/${c}`)];
   return pages.map(path => ({
     url: `${base}${path}/`,
     lastModified: new Date(),
