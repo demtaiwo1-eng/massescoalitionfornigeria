@@ -131,7 +131,7 @@ app.post("/api/auth/publisher-recovery", publisherRecoveryLimiter, asyncRoute(as
   if (!expectedToken || expectedToken.length < 40 || !safeEqual(recoveryKey, expectedToken)) {
     return res.status(403).json({ error: "Publisher recovery could not be verified." });
   }
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || typeof newPassword !== "string" || newPassword.length < 14 || newPassword.length > 200) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof newPassword !== "string" || newPassword.length < 14 || newPassword.length > 200) {
     return res.status(400).json({ error: "Enter the Publisher email and a new password of at least 14 characters." });
   }
   const client = await pool.connect();
