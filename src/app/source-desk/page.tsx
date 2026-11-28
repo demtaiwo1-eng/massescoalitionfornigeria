@@ -26,7 +26,7 @@ export default function SourceDeskPage() {
         <ShieldAlert size={22}/>
         <div><strong>Editorial transparency</strong><p>These are third-party source briefs, not original MCN reporting. MCN has not independently verified every claim. Opinion, campaign material and allegations are labelled; any story selected for MCN publication must be independently checked, balanced and cleared by an editor.</p></div>
       </div>
-      <div className="source-desk-meta"><span><strong>{ibConnectBriefs.length}</strong> source briefs</span><span>15–27 November 2026</span><span>Publisher: IB Connect</span></div>
+      <div className="source-desk-meta"><span><strong>{ibConnectBriefs.length}</strong> source briefs</span><span>17–27 November 2026</span><span>Publisher: IB Connect</span></div>
     </section>
     <section className="wrap source-desk-list">
       <div className="source-desk-section-heading"><div><div className="eyebrow">LATEST FIRST</div><h2>Recent posts from <em>IB Connect</em></h2></div><a href="https://ibconnectng.blogspot.com/" target="_blank" rel="noopener noreferrer">Visit original site <ArrowUpRight size={15}/></a></div>
