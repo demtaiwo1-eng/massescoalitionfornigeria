@@ -158,7 +158,7 @@ app.get("/api/articles", asyncRoute(async (req, res) => {
   const count = await pool.query(`SELECT COUNT(*)::int AS total FROM articles WHERE ${where}`, values);
   const total = count.rows[0]?.total || 0;
   const rows = await pool.query(
-    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC,id DESC LIMIT ${values.length + 1} OFFSET ${values.length + 2}`,
+    `SELECT id,slug,title,dek,category,featured_image_url,featured_image_alt,published_at,seo_description FROM articles WHERE ${where} ORDER BY published_at DESC,id DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
     [...values, limit, offset]
   );
   res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
