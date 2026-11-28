@@ -10,7 +10,7 @@ MCN is an independent Nigerian news publishing platform. It combines a public-fa
 |---|---|---|
 | Public website | https://demtaiwo1-eng.github.io/massescoalitionfornigeria.github.io/ | Public news portal |
 | Newsroom sign-in | https://demtaiwo1-eng.github.io/massescoalitionfornigeria.github.io/newsroom/sign-in/ | Staff login and role registration |
-| Source Desk | https://demtaiwo1-eng.github.io/massescoalitionfornigeria.github.io/source-desk/ | 35 attributed external-source briefs |
+| Explore News | https://demtaiwo1-eng.github.io/massescoalitionfornigeria.github.io/source-desk/ | 35 collected news stories |
 | Advanced access activation | https://demtaiwo1-eng.github.io/massescoalitionfornigeria.github.io/access/activate/ | Redeem an issued access PIN |
 | Backend health | https://mcn-newsroom-api.onrender.com/health | API and database health check |
 | Source code | https://github.com/demtaiwo1-eng/massescoalitionfornigeria | Main application repository |
@@ -27,7 +27,7 @@ The custom domain `www.massescoalitionfornigeria.com` is not yet the active publ
 - Search published stories.
 - Read the About, Editorial Policy, Corrections, Privacy and Terms pages.
 - Send news tips, corrections, responses and editorial enquiries through the Contact form.
-- Visit the Source Desk, which presents 35 curated IB Connect story briefs with dates, categories, editorial cautions and links to the original source.
+- Visit the Explore News, which presents 35 collected news stories with dates, categories, editorial cautions and links to the original source.
 - Open the newsroom sign-in and advanced-access activation pages.
 
 ### Private newsroom
@@ -47,7 +47,7 @@ The custom domain `www.massescoalitionfornigeria.com` is not yet the active publ
 - Keep audit records for important privileged actions.
 
 ### Current content status
-The Source Desk has 35 attributed research briefs. These are not 35 published MCN news articles. The public Latest Stories page currently displays “No stories published yet.” The newsroom must create, verify, review and publish original stories before they appear in the public news feed. Do not describe external-source briefs as original MCN reporting.
+The Explore News has 35 attributed research briefs. These are not 35 published MCN news articles. The public Latest Stories page currently displays “No stories published yet.” The newsroom must create, verify, review and publish original stories before they appear in the public news feed. Do not describe external-source briefs as original MCN reporting.
 
 ## 3. How to navigate the public website
 
@@ -55,7 +55,7 @@ The Source Desk has 35 attributed research briefs. These are not 35 published MC
 2. Use the top navigation to open a news category.
 3. Select **Search** to find published stories.
 4. Select **Explore the latest** or **All latest stories** to view the publication feed.
-5. Select **Source Desk** to review the 35 attributed IB Connect briefs. Each brief links to its original publisher and includes a note where claims, allegations, campaign material or opinion need further checking.
+5. Select **Explore News** to review the 35 attributed external publishers briefs. Each brief links to its original publisher and includes a note where claims, allegations, campaign material or opinion need further checking.
 6. Use **About** to understand the publication.
 7. Use **Editorial Policy** to read the standards for verification, attribution, fairness and corrections.
 8. Use **Contact** to submit a news tip, correction or editorial enquiry.
@@ -124,7 +124,7 @@ Editorial safeguards:
 - Clearly distinguish news, opinion, analysis and campaign claims.
 - Do not fabricate quotes, sources, photographs or events.
 - Correct material errors transparently.
-- Treat Source Desk entries as research leads, not proof that the reported claims are true.
+- Treat Explore News entries as research leads, not proof that the reported claims are true.
 
 ## 7. Contact inbox
 
@@ -258,7 +258,7 @@ Public browser checks performed for this handover confirmed:
 - Homepage loads and shows its main navigation and category links.
 - About and Editorial Policy pages load.
 - Contact page shows its message form.
-- Source Desk loads the 35 attributed briefs.
+- Explore News loads the 35 attributed briefs.
 - Newsroom sign-in page loads.
 - Registration form exposes the four non-Administrator roles and the 14-character password minimum.
 - Latest Stories currently has no published articles.
@@ -319,7 +319,7 @@ npm run check
 ## 16. Important limitations and honest delivery status
 
 - No MCN articles are currently published in the public Latest Stories feed.
-- The Source Desk is an attributed research/monitoring list, not an independently verified news feed.
+- The Explore News is an attributed research/monitoring list, not an independently verified news feed.
 - Advanced PIN activation records an entitlement but is not yet a full customer account or complete premium-content gating system.
 - The current repository does not yet contain an Android native project or generated APK.
 - The custom domain is not yet active.
