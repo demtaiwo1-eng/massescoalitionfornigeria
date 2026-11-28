@@ -156,7 +156,7 @@ app.post("/api/auth/publisher-recovery", publisherRecoveryLimiter, asyncRoute(as
     await client.query("UPDATE newsroom_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL", [account.rows[0].id]);
     await client.query("INSERT INTO system_settings(key,value) VALUES('publisher_recovery_used',now()::text) ON CONFLICT (key) DO NOTHING");
     await client.query(
-      "INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'publisher_password_recovered','user',$1,$2)",
+      "INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'publisher_password_recovered','user',$1::text,$2)",
       [account.rows[0].id, JSON.stringify({ email, sessionsRevoked: true })]
     );
     await client.query("COMMIT");
