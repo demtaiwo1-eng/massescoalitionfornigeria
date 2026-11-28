@@ -116,7 +116,7 @@ app.post("/api/auth/register", registrationLimiter, asyncRoute(async (req,res) =
     const admin=await client.query("SELECT 1 FROM newsroom_users WHERE role='publisher' AND is_active=true LIMIT 1");
     if(!admin.rowCount) { await client.query("ROLLBACK"); return res.status(503).json({error:"The Administrator has not completed first-time setup yet. Please try again later."}); }
     const created=await client.query("INSERT INTO newsroom_users(email,full_name,password_hash,role,is_active,registration_status) VALUES($1,$2,$3,$4,false,'pending') RETURNING id,email,full_name,role,registration_status",[email,fullName,hash,role]);
-    await client.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'registration_submitted','user',$1,$2)",[created.rows[0].id,JSON.stringify({email,role})]);
+    await client.query("INSERT INTO audit_log(actor_id,action,entity_type,entity_id,details) VALUES($1,'registration_submitted','user',$2,$3)",[created.rows[0].id,String(created.rows[0].id),JSON.stringify({email,role})]);
     await client.query("COMMIT");
     res.status(201).json({ok:true,status:"pending",message:"Registration received. The Administrator must approve your account before you can sign in."});
   } catch(error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
